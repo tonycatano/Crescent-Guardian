@@ -1,11 +1,1 @@
-__pycache__/
-venv/
 logs/
-poetry.lock
-pyproject.toml
-replit.nix
-.cache/
-.breakpoints
-.config/
-.replit
-.upm/
