@@ -5,8 +5,6 @@ from common import guild_ids
 import datetime
 import asyncio
 
-# This is a test comment.
-
 class MyBot(commands.Bot):
   def __init__(self):
     super().__init__(command_prefix='/',
