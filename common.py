@@ -4,9 +4,8 @@ import discord
 from typing import List
 from replit import db
 
-guild_ids=[discord.Object(id=os.environ['TEST_SERVER_ID']),
-           discord.Object(id=os.environ['TRUE_SYNERGY_ID'])]
-#guild_ids=[discord.Object(id=os.environ['TEST_SERVER_ID'])]
+#guild_ids=[discord.Object(id=os.environ['TRUE_SYNERGY_ID'])]
+guild_ids=[discord.Object(id=os.environ['TEST_SERVER_ID'])]
 
 class GMRequest:
   def __init__(self, name:str, server:str=None):
@@ -28,17 +27,17 @@ async def find_gm_req(request:str):
 
 async def add_gm_reqs(reqs:List[str]) -> str:
   gm_requests = [GMRequest(req) for req in reqs if req]
-  rc = "*Added **"
+  msg = "*Added **"
   for gm_request in gm_requests:
-    rc += gm_request.name + "** / **"
+    msg += gm_request.name + "** / **"
     if "gm_reqs" in db.keys():
       db["gm_reqs"].append(vars(gm_request))
     else:
       db["gm_reqs"] = [vars(gm_request)]
 
-  rc += "END"
-  rc = rc.replace("** / **END", "***")
-  return rc
+  msg += "END"
+  msg = msg.replace("** / **END", "***")
+  return msg
 
 async def delete_gm_req(request:str) -> bool:
   gm_req = await find_gm_req(request)
@@ -57,16 +56,24 @@ async def edit_gm_req(request:str, newtext:str) -> bool:
   else:
     return False
 
-async def set_gm_req_server(request:str, server:str) -> bool:
+async def set_gm_req_server(request:str, server:str) -> str:
   gm_req = await find_gm_req(request)
+  msg = f'*Updated **{request}***'
+  
+  # If not found, add it
+  if not gm_req:
+    reqs = [request]
+    msg = await add_gm_reqs(reqs)
+    gm_req = await find_gm_req(request)
+
+  # Set the server value
   if gm_req:
     index = db["gm_reqs"].index(gm_req)
     if server.lower() == "none":
       server = None
     db["gm_reqs"][index]["server"] = server
-    return True
-  else:
-    return False
+
+  return msg
 
 async def clear_gm_reqs():
   if "gm_reqs" in db.keys():

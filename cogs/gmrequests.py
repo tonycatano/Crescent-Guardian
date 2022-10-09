@@ -19,6 +19,7 @@ class GMRequests(commands.Cog):
     self.bot = bot
 
   #----------------------------------------------
+  #----------------------------------------------
   @app_commands.command(name="gmlist",
                         description="Display the GM request list")
   # TODO: @check_for_purge
@@ -27,6 +28,7 @@ class GMRequests(commands.Cog):
     emby = await common.get_gm_list_embed()
     await interaction.response.send_message(embed=emby)
 
+  #----------------------------------------------
   #----------------------------------------------
   @app_commands.command(name="gmadd",
                         description="Add a GM request to the list")
@@ -49,6 +51,7 @@ class GMRequests(commands.Cog):
     await interaction.response.send_message(content=reqstr, embed=emby)
 
   #----------------------------------------------
+  #----------------------------------------------
   @app_commands.command(name="gmfound", 
                         description="Indicate that a GM has been found for a request")
   @app_commands.describe(request = "Select the request")
@@ -56,13 +59,9 @@ class GMRequests(commands.Cog):
   async def gmfound(self, interaction: discord.Interaction, 
                     request: str, server: str):
     await self.bot.log_command("gmfound", interaction.user.name)
-    if await common.set_gm_req_server(request, server):
-      emby = await common.get_gm_list_embed()
-      await interaction.response.send_message(
-        content=f'*Updated **{request}***', embed=emby)
-    else:
-      await interaction.response.send_message(
-        content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
+    msg = await common.set_gm_req_server(request, server)
+    emby = await common.get_gm_list_embed()
+    await interaction.response.send_message(content=msg, embed=emby)
     
   @gmfound.autocomplete('request')
   async def gmfound_autocomplete_request(self, interaction: discord.Interaction,
@@ -84,6 +83,7 @@ class GMRequests(commands.Cog):
     return [Choice(name=server, value=server)
             for server in servers if current.lower() in server.lower()]
 
+  #----------------------------------------------
   #----------------------------------------------
   @app_commands.command(name="gmedit",
                         description="Edit a GM request in the list")
@@ -108,6 +108,7 @@ class GMRequests(commands.Cog):
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
   #----------------------------------------------
+  #----------------------------------------------
   @app_commands.command(name="gmdelete",
                         description="Delete a GM request from the list")
   @app_commands.describe(request = "Select the request to delete")
@@ -129,6 +130,7 @@ class GMRequests(commands.Cog):
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
   #----------------------------------------------
+  #----------------------------------------------
   @app_commands.command(name="gmclear",
                         description="Clear the entire GM request list")
   async def gmclear(self, interaction:discord.Interaction) -> None:
@@ -138,6 +140,7 @@ class GMRequests(commands.Cog):
     await interaction.response.send_message(content="*Request list cleared*",
                                             embed=emby)
 
+  #----------------------------------------------
   #----------------------------------------------
   @app_commands.command(name="gmgarmy",
                         description="Update the Garmoth Scroll Status")
