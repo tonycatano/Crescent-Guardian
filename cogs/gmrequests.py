@@ -54,7 +54,7 @@ class GMRequests(commands.Cog):
   #----------------------------------------------
   @app_commands.command(name="gmfound", 
                         description="Indicate that a GM has been found for a request")
-  @app_commands.describe(request = "Select the request")
+  @app_commands.describe(request = "Select an existing request or enter a new request")
   @app_commands.describe(server = "Select the server where the GM was found \n(Select 'None' if not found)")
   async def gmfound(self, interaction: discord.Interaction, 
                     request: str, server: str):
@@ -76,9 +76,9 @@ class GMRequests(commands.Cog):
                                         current: str) -> List[Choice[str]]:
     # TODO: Make a superuser command '/season {on,off}' or '/cgconfig severlist'
     # to toggle the server list when a Season is active
-    # servers = ["None", "SS1", "SS2", "SS3", "B1", "B2", "C2", "C2",
+    # servers = ["None", "SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
     #            "M1", "M2", "S1", "S2", "Rulu", "Val", "Arsha"]
-    servers = ["None", "B1", "B2", "C2", "C2", "M1", "M2", "S1", "S2",
+    servers = ["None", "B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
                "Rulu", "Val", "Arsha"]
     return [Choice(name=server, value=server)
             for server in servers if current.lower() in server.lower()]
