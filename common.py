@@ -1,11 +1,9 @@
-
 import os
 import discord
 from typing import List
 from replit import db
 
-guild_ids=[discord.Object(id=os.environ['TRUE_SYNERGY_ID'])]
-#guild_ids=[discord.Object(id=os.environ['TEST_SERVER_ID'])]
+guild_ids=[discord.Object(id=os.environ['DISCORD_SERVER_ID'])]
 
 class GMRequest:
   def __init__(self, name:str, server:str=None):
