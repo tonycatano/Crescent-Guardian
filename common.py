@@ -67,7 +67,7 @@ async def set_gm_req_server(request:str, server:str) -> str:
     gm_req = await find_gm_req(request)
 
   # Set the server value
-  if gm_req:    
+  if gm_req:
     index = db["gm_reqs"].index(gm_req)
     if server.lower() == "none":
       server = None
