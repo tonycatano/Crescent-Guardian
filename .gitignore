@@ -1,0 +1,13 @@
+# This is the MAIN branch.
+.breakpoints
+.cache/
+.config/
+.git/
+logs/
+poetry.lock
+__pycache__/
+pyproject.toml
+.replit
+replit.nix
+.upm/
+venv/
