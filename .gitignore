@@ -2,7 +2,7 @@
 .cache*
 .config*
 .git*
-logs*
+logs
 poetry.lock*
 __pycache__*
 pyproject.toml*
