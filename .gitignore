@@ -2,4 +2,9 @@ logs/
 __pycache__/
 venv/
 .replit
-.breakpoints*
+.breakpoints
+poetry.lock*
+pyproject.toml*
+replit.nix*
+
+
