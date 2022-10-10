@@ -4,7 +4,7 @@
 .git/
 logs/
 poetry.lock
-__pycache__*
+__pycache__/
 pyproject.toml
 .replit
 replit.nix
