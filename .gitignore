@@ -9,4 +9,4 @@ pyproject.toml
 .replit
 replit.nix
 .upm/
-venv*
+venv/
