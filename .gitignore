@@ -3,10 +3,10 @@
 .config/
 .git/
 logs/
-poetry.lock*
+poetry.lock
 __pycache__*
-pyproject.toml*
+pyproject.toml
 .replit
-replit.nix*
+replit.nix
 .upm/
 venv*
