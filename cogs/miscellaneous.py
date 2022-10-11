@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from common import guild_ids
+from common.common import guild_ids
 
 class Miscellaneous(commands.Cog):
   def __init__(self, bot:commands.Bot) -> None:

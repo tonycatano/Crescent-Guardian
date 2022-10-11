@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from common import guild_ids
+from common.common import guild_ids
 import datetime
 import asyncio
 
