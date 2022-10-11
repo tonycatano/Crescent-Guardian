@@ -5,6 +5,13 @@ from replit import db
 
 guild_ids=[discord.Object(id=os.environ['DISCORD_SERVER_ID'])]
 
+# TODO: Make a superuser command '/season {on,off}' or '/cgconfig severlist'
+# to update the server list when a Season is active
+# gm_servers = ["SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
+#               "M1", "M2", "S1", "S2", "Val", "Arsha", "None"]
+gm_servers = ["B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
+              "Rulu", "Val", "Arsha", "None"]
+
 class GMRequest:
   def __init__(self, name:str, server:str=None):
     self.name = name
@@ -45,14 +52,26 @@ async def delete_gm_req(request:str) -> bool:
   else:
     return False
 
-async def edit_gm_req(request:str, newtext:str) -> bool:
+async def edit_gm_req(request:str, newtext:str, newserver:str) -> str:
   gm_req = await find_gm_req(request)
   if gm_req:
     index = db["gm_reqs"].index(gm_req)
     db["gm_reqs"][index]["name"] = newtext
-    return True
+    oldserver = db["gm_reqs"][index]["server"]
+    msg = "*Changed **" + request
+    if oldserver:
+      msg += " (" + oldserver + ")"
+    msg += "** to **" + newtext
+    if newserver:
+      await set_gm_req_server(newtext, newserver)
+      if newserver != "None":
+        msg += " (" + newserver + ")"
+    elif oldserver:
+      msg += " (" + oldserver + ")"
+    msg += "***"
+    return msg
   else:
-    return False
+    return None
 
 async def set_gm_req_server(request:str, server:str) -> str:
   gm_req = await find_gm_req(request)

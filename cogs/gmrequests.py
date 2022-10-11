@@ -3,8 +3,10 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from typing import List
-import common
-from common import guild_ids
+import common.common as common
+from common.common import guild_ids
+from common.common import gm_servers
+
 #import asyncio
 
 # TODO:
@@ -19,16 +21,18 @@ class GMRequests(commands.Cog):
     self.bot = bot
 
   #----------------------------------------------
+  # gmlist
   #----------------------------------------------
   @app_commands.command(name="gmlist",
                         description="Display the GM request list")
   # TODO: @check_for_purge
-  async def gmlist(self, interaction: discord.Interaction) -> None:
+  async def gmlist(self, interaction:discord.Interaction) -> None:
     await self.bot.log_command("gmlist", interaction.user.name)
     emby = await common.get_gm_list_embed()
     await interaction.response.send_message(embed=emby)
 
   #----------------------------------------------
+  # gmadd
   #----------------------------------------------
   @app_commands.command(name="gmadd",
                         description="Add a GM request to the list")
@@ -51,6 +55,7 @@ class GMRequests(commands.Cog):
     await interaction.response.send_message(content=reqstr, embed=emby)
 
   #----------------------------------------------
+  # gmfound
   #----------------------------------------------
   @app_commands.command(name="gmfound", 
                         description="Indicate that a GM has been found for a request")
@@ -74,28 +79,23 @@ class GMRequests(commands.Cog):
   @gmfound.autocomplete('server')
   async def gmfound_autocomplete_server(self, interaction: discord.Interaction,
                                         current: str) -> List[Choice[str]]:
-    # TODO: Make a superuser command '/season {on,off}' or '/cgconfig severlist'
-    # to toggle the server list when a Season is active
-    # servers = ["None", "SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
-    #            "M1", "M2", "S1", "S2", "Rulu", "Val", "Arsha"]
-    servers = ["None", "B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
-               "Rulu", "Val", "Arsha"]
     return [Choice(name=server, value=server)
-            for server in servers if current.lower() in server.lower()]
+            for server in gm_servers if current.lower() in server.lower()]
 
   #----------------------------------------------
+  # gmedit
   #----------------------------------------------
-  @app_commands.command(name="gmedit",
-                        description="Edit a GM request in the list")
+  @app_commands.command(name="gmedit", description="Edit a GM request in the list")
   @app_commands.describe(request = "Select the request to edit")
   @app_commands.describe(newtext = "Enter the new text for the request")
-  async def gmedit(self, interaction: discord.Interaction, 
-                   request: str, newtext: str):
+  @app_commands.describe(server = "Select the server where the GM was found \n(Select 'None' if not found)")
+  async def gmedit(self, interaction: discord.Interaction, request:str,
+                   newtext:str, server:str=None):
     await self.bot.log_command("gmedit", interaction.user.name)
-    if await common.edit_gm_req(request, newtext):
+    msg = await common.edit_gm_req(request, newtext, server)
+    if msg:
       emby = await common.get_gm_list_embed()
-      await interaction.response.send_message(
-        content=f'*Changed **{request}** to **{newtext}***', embed=emby)
+      await interaction.response.send_message(content=msg, embed=emby)
     else:
       await interaction.response.send_message(
         content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
@@ -107,7 +107,14 @@ class GMRequests(commands.Cog):
     return [Choice(name=gm_request.name, value=gm_request.name)
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
+  @gmedit.autocomplete('server')
+  async def gmedit_autocomplete_server(self, interaction: discord.Interaction,
+                                       current: str) -> List[Choice[str]]:
+    return [Choice(name=server, value=server)
+            for server in gm_servers if current.lower() in server.lower()]
+
   #----------------------------------------------
+  # gmdelete
   #----------------------------------------------
   @app_commands.command(name="gmdelete",
                         description="Delete a GM request from the list")
@@ -130,6 +137,7 @@ class GMRequests(commands.Cog):
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
   #----------------------------------------------
+  # gmclear
   #----------------------------------------------
   @app_commands.command(name="gmclear",
                         description="Clear the entire GM request list")
@@ -141,6 +149,7 @@ class GMRequests(commands.Cog):
                                             embed=emby)
 
   #----------------------------------------------
+  # gmgarmy
   #----------------------------------------------
   @app_commands.command(name="gmgarmy",
                         description="Update the Garmoth Scroll Status")
