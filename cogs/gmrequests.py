@@ -121,10 +121,10 @@ class GMRequests(commands.Cog):
   @app_commands.describe(request = "Select the request to delete")
   async def gmdelete(self, interaction: discord.Interaction, request:str):
     await self.bot.log_command("gmdelete", interaction.user.name)
-    if await common.delete_gm_req(request):
+    msg = await common.delete_gm_req(request) 
+    if msg:
       emby = await common.get_gm_list_embed()
-      await interaction.response.send_message(
-        content=f'*Deleted* ***{request}***', embed=emby)
+      await interaction.response.send_message(content=msg, embed=emby)
     else:
       await interaction.response.send_message(
         content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
