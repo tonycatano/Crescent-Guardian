@@ -44,13 +44,19 @@ async def add_gm_reqs(reqs:List[str]) -> str:
   msg = msg.replace("** / **END", "***")
   return msg
 
-async def delete_gm_req(request:str) -> bool:
+async def delete_gm_req(request:str) -> str:
   gm_req = await find_gm_req(request)
   if gm_req:
+    msg=f'*Deleted **{request}'
+    index = db["gm_reqs"].index(gm_req)
+    server = db["gm_reqs"][index]["server"]
+    if server:
+      msg += " (" + server + ")"
+    msg += "***"
     db["gm_reqs"].remove(gm_req)
-    return True
+    return msg
   else:
-    return False
+    return None
 
 async def edit_gm_req(request:str, newtext:str, newserver:str) -> str:
   gm_req = await find_gm_req(request)
@@ -75,20 +81,34 @@ async def edit_gm_req(request:str, newtext:str, newserver:str) -> str:
 
 async def set_gm_req_server(request:str, server:str) -> str:
   gm_req = await find_gm_req(request)
-  msg = f'*Updated **{request}***'
+  msg = ""
+  gm_req_added = False
   
   # If not found, add it
   if not gm_req:
     reqs = [request]
-    msg = await add_gm_reqs(reqs)
+    await add_gm_reqs(reqs)
+    msg = "*Added **" + request
+    gm_req_added = True
     gm_req = await find_gm_req(request)
 
   # Set the server value
   if gm_req:
     index = db["gm_reqs"].index(gm_req)
+    if not gm_req_added:
+      msg = "*Changed **" + request
+      oldserver = db["gm_reqs"][index]["server"]
+      if oldserver:
+        msg += " (" + oldserver + ")"
+      msg += "** to **" + request
     if server.lower() == "none":
       server = None
+      msg += " (None)***"
+    else:
+      msg += " (" + server + ")***"
     db["gm_reqs"][index]["server"] = server
+  else:
+    msg = ":frowning: *Sorry, something went wrong. Try again.*"
 
   return msg
 
