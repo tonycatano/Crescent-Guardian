@@ -47,7 +47,8 @@ class GMRequests(commands.Cog):
     await self.bot.log_command("gmadd", interaction.user.name)
     reqs = [request, request2, request3, request4, request5]
     reqstr = await common.add_gm_reqs(reqs)
-    # FIXME: Trying to syncronize add commands, but it's not working so far.
+    # FIXME: Trying to syncronize add commands to prevent race conditions,
+    #        but it's not working so far.
     # async with self.bot.db_lock:
     #     - or - 
     # asyncio.sleep(1)
@@ -61,20 +62,18 @@ class GMRequests(commands.Cog):
                         description="Indicate that a GM has been found for a request")
   @app_commands.describe(request = "Select an existing request or enter a new request")
   @app_commands.describe(server = "Select the server where the GM was found \n(Select 'None' if not found)")
-  async def gmfound(self, interaction: discord.Interaction, 
-                    request: str, server: str):
+  async def gmfound(self, interaction:discord.Interaction, request:str, server:str):
     await self.bot.log_command("gmfound", interaction.user.name)
     msg = await common.set_gm_req_server(request, server)
     emby = await common.get_gm_list_embed()
     await interaction.response.send_message(content=msg, embed=emby)
     
   @gmfound.autocomplete('request')
-  async def gmfound_autocomplete_request(self, interaction: discord.Interaction,
-                                         current: str) -> List[Choice[str]]:
+  async def gmfound_autocomplete_request(self, interaction:discord.Interaction,
+                                         current:str) -> List[Choice[str]]:
     gm_requests = await common.get_gm_requests()
-    return [Choice(name=gm_request.name, value=gm_request.name)
+    return [Choice(name=gm_request.name, value=gm_request.uuid)
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
-                                           ### and not gm_request.server]
 
   @gmfound.autocomplete('server')
   async def gmfound_autocomplete_server(self, interaction: discord.Interaction,
@@ -89,8 +88,9 @@ class GMRequests(commands.Cog):
   @app_commands.describe(request = "Select the request to edit")
   @app_commands.describe(newtext = "Enter the new text for the request")
   @app_commands.describe(server = "Select the server where the GM was found \n(Select 'None' if not found)")
-  async def gmedit(self, interaction: discord.Interaction, request:str,
+  async def gmedit(self, interaction:discord.Interaction, request:str,
                    newtext:str, server:str=None):
+    print("/gmedit uuid=" + request)
     await self.bot.log_command("gmedit", interaction.user.name)
     msg = await common.edit_gm_req(request, newtext, server)
     if msg:
@@ -104,7 +104,7 @@ class GMRequests(commands.Cog):
   async def gmedit_autocomplete(self, interaction: discord.Interaction,
                                 current: str) -> List[Choice[str]]:
     gm_requests = await common.get_gm_requests()
-    return [Choice(name=gm_request.name, value=gm_request.name)
+    return [Choice(name=gm_request.name, value=gm_request.uuid)
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
   @gmedit.autocomplete('server')
@@ -119,12 +119,12 @@ class GMRequests(commands.Cog):
   @app_commands.command(name="gmdelete",
                         description="Delete a GM request from the list")
   @app_commands.describe(request = "Select the request to delete")
-  async def gmdelete(self, interaction: discord.Interaction, request:str):
+  async def gmdelete(self, interaction:discord.Interaction, request:str):
     await self.bot.log_command("gmdelete", interaction.user.name)
-    if await common.delete_gm_req(request):
+    msg = await common.delete_gm_req(request)
+    if msg:
       emby = await common.get_gm_list_embed()
-      await interaction.response.send_message(
-        content=f'*Deleted* ***{request}***', embed=emby)
+      await interaction.response.send_message(content=msg, embed=emby)
     else:
       await interaction.response.send_message(
         content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
@@ -133,7 +133,7 @@ class GMRequests(commands.Cog):
   async def gmdelete_autocomplete(self, interaction:discord.Interaction,
                                   current:str) -> List[Choice[str]]:
     gm_requests = await common.get_gm_requests()
-    return [Choice(name=gm_request.name, value=gm_request.name)
+    return [Choice(name=gm_request.name, value=gm_request.uuid)
             for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
 
   #----------------------------------------------
