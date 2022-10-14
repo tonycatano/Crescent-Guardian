@@ -22,6 +22,7 @@ async def get_gm_requests() -> List[GMRequest]:
   if "gm_reqs" in db.keys():
     for gm_req in db["gm_reqs"]:
       gm_requests.append(GMRequest(gm_req['name'], gm_req['server']))
+  gm_requests.sort(key=lambda request : request.name)
   return gm_requests
 
 async def find_gm_req(request:str):
@@ -30,18 +31,32 @@ async def find_gm_req(request:str):
     gm_req = next((req for req in db["gm_reqs"] if req["name"] == request), None)
   return gm_req
 
+async def validate_name(name:str, iter:int=0) -> str:
+  if await find_gm_req(name):
+    return await validate_name(name + "\u2071", iter + 1)
+  else:
+    return name
+
 async def add_gm_reqs(reqs:List[str]) -> str:
   gm_requests = [GMRequest(req) for req in reqs if req]
   msg = "*Added **"
+  dupnames = 0
   for gm_request in gm_requests:
-    msg += gm_request.name + "** / **"
+    valname = await validate_name(gm_request.name)
+    if valname != gm_request.name:
+      gm_request.name = valname
+      dupnames += 1
+    msg += gm_request.name + "**  ,  **"
     if "gm_reqs" in db.keys():
       db["gm_reqs"].append(vars(gm_request))
     else:
       db["gm_reqs"] = [vars(gm_request)]
-
   msg += "END"
-  msg = msg.replace("** / **END", "***")
+  msg = msg.replace("**  ,  **END", "***")
+  if dupnames > 1:
+    msg += "\n*(Request names modified due to duplicates)*"
+  elif dupnames > 0:
+    msg += "\n*(Request name modified due to duplicates)*"
   return msg
 
 async def delete_gm_req(request:str) -> str:
@@ -61,6 +76,12 @@ async def delete_gm_req(request:str) -> str:
 async def edit_gm_req(request:str, newtext:str, newserver:str) -> str:
   gm_req = await find_gm_req(request)
   if gm_req:
+    dupname = False
+    if newtext != request:
+      valnewtex = await validate_name(newtext)
+      if valnewtex != newtext:
+        newtext = valnewtex
+        dupname = True
     index = db["gm_reqs"].index(gm_req)
     db["gm_reqs"][index]["name"] = newtext
     oldserver = db["gm_reqs"][index]["server"]
@@ -70,11 +91,12 @@ async def edit_gm_req(request:str, newtext:str, newserver:str) -> str:
     msg += "** to **" + newtext
     if newserver:
       await set_gm_req_server(newtext, newserver)
-      if newserver != "None":
-        msg += " (" + newserver + ")"
+      msg += " (" + newserver + ")"
     elif oldserver:
       msg += " (" + oldserver + ")"
     msg += "***"
+    if dupname:
+      msg += "\n*(Request name modified due to duplicates)*"
     return msg
   else:
     return None
