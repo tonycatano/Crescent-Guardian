@@ -11,7 +11,7 @@ class Miscellaneous(commands.Cog):
       # GUILD MISSON COMMANDS
       "/gmlist":["Display the GM request list",True],
       "/gmadd":["Add a GM request to the list",True],
-      "/gmfound":["Indicate that a GM has been found for a request",True],
+      "/gmfound":["Indicate that a GM request has been found",True],
       "/gmedit":["Edit a GM request in the list",True],
       "/gmdelete":["Delete a GM request from the list",True],
       "/gmclear":["Clear the entire GM request list",True],
