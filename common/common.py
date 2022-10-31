@@ -3,19 +3,32 @@ import discord
 from typing import List
 from replit import db
 
-guild_ids=[discord.Object(id=os.environ['DISCORD_SERVER_ID'])]
+# TODO: The following few items will be moved to a new file called 'genutils'
+guildIDs=[discord.Object(id=os.environ['DISCORD_SERVER_ID'])]
+connectionLogFile = "logs/rocg.connection.log"
+commandLogFile = "logs/rocg.command.log"
+
+# TODO: The rest of this stuff will remain in this file, but the file will be
+#       renamed to 'gmrequest.py' after the class defined in this file.
+gmReqTable = "gm_reqs"
+gmReqNameKey = "name"
+gmReqServerKey = "server"
+gmReqSizeKey = "gmsize"
+
+superScript_i = "\u2071"
+garmyURL = "https://bdocodex.com/items/ui_artwork/ic_05154.png"
 
 noServer = "NoServer"
 noSize = "NoSize"
 
 # TODO: Make a superuser command '/season {on,off}' or '/cgconfig severlist'
 # to update the server list when a Season is active
-# gm_servers = [noServer, "SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
-#               "M1", "M2", "S1", "S2", "Val", "Arsha"]
-gm_servers = [noServer, "B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
-              "Rulu", "Val", "Arsha"]
+gmServers = [noServer, "SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
+             "M1", "M2", "S1", "S2", "Val", "Arsha"]
+#gmServers = [noServer, "B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
+#              "Rulu", "Val", "Arsha"]
 
-gmSizes =[noSize, "20", "120", "2000", "3000", "4000", "5000"]
+gmSizes =[noSize, "2", "3", "4", "5", "120", "2000", "3000", "4000", "5000"]
 
 #-------------------------------------------------------------------------------------------
 # The GMRequest class encapsulates the different attributes of a GM request
@@ -37,8 +50,8 @@ class GMRequest:
 
   # Create and return an instance of GMRequest from a DB dict type
   @staticmethod
-  def fromDict(gm_req:dict):
-    return GMRequest(gm_req["name"], gm_req["server"], gm_req["gmsize"])
+  def fromDict(gmReqEntry:dict):
+    return GMRequest(gmReqEntry[gmReqNameKey], gmReqEntry[gmReqServerKey], gmReqEntry[gmReqSizeKey])
 
   # Create and return an instance of GMRequest, replacing None values with the
   # given default values
@@ -77,28 +90,28 @@ class GMRequest:
 #-------------------------------------------------------------------------------------------
 # Get the GM requests from the DB and return them as a list of GMRequest types 
 #-------------------------------------------------------------------------------------------
-async def get_gm_requests() -> List[GMRequest]:
-  gm_requests = []
-  if "gm_reqs" in db.keys():
-    for gm_req in db["gm_reqs"]:
-      gm_requests.append(GMRequest.fromDict(gm_req))
-  return gm_requests
+async def getCurrentGMRequestList() -> List[GMRequest]:
+  gmRequests = []
+  if gmReqTable in db.keys():
+    for gmReqEntry in db[gmReqTable]:
+      gmRequests.append(GMRequest.fromDict(gmReqEntry))
+  return gmRequests
 
 #-------------------------------------------------------------------------------------------
-# Find the GM req in the DB that matches the given name
+# Find the GM req entry in the DB that matches the given name
 #-------------------------------------------------------------------------------------------
-async def find_gm_req(request:str):
-  gm_req = None
-  if "gm_reqs" in db.keys():
-    gm_req = next((req for req in db["gm_reqs"] if req["name"] == request), None)
-  return gm_req
+async def findGMReqEntry(name:str):
+  gmReqEntry = None
+  if gmReqTable in db.keys():
+    gmReqEntry = next((req for req in db[gmReqTable] if req[gmReqNameKey] == name), None)
+  return gmReqEntry
 
 #-------------------------------------------------------------------------------------------
 # For a new GM request, change the given name slightly if the name already exists in the DB
 #-------------------------------------------------------------------------------------------
-async def validate_name(name:str, iter:int=0) -> str:
-  if await find_gm_req(name):
-    return await validate_name(name + "\u2071", iter + 1)
+async def validateName(name:str, iter:int=0) -> str:
+  if await findGMReqEntry(name):
+    return await validateName(name + superScript_i, iter + 1)
   else:
     return name
 
@@ -107,9 +120,9 @@ async def validate_name(name:str, iter:int=0) -> str:
 # GM request values
 #-------------------------------------------------------------------------------------------
 async def updateDB(index:int, newGMRequest:GMRequest):
-  db["gm_reqs"][index]["name"]   = newGMRequest.name
-  db["gm_reqs"][index]["server"] = newGMRequest.serverForDB()
-  db["gm_reqs"][index]["gmsize"] = newGMRequest.gmsizeForDB()
+  db[gmReqTable][index][gmReqNameKey]   = newGMRequest.name
+  db[gmReqTable][index][gmReqServerKey] = newGMRequest.serverForDB()
+  db[gmReqTable][index][gmReqSizeKey]   = newGMRequest.gmsizeForDB()
 
 #-------------------------------------------------------------------------------------------
 # Insert the given GM request into the DB
@@ -117,10 +130,10 @@ async def updateDB(index:int, newGMRequest:GMRequest):
 async def insertIntoDB(newGMRequest:GMRequest):
   newGMRequest.server = newGMRequest.serverForDB()
   newGMRequest.gmsize = newGMRequest.gmsizeForDB()
-  if "gm_reqs" in db.keys():
-    db["gm_reqs"].append(vars(newGMRequest))
+  if gmReqTable in db.keys():
+    db[gmReqTable].append(vars(newGMRequest))
   else:
-    db["gm_reqs"] = [vars(newGMRequest)]
+    db[gmReqTable] = [vars(newGMRequest)]
   
 #-------------------------------------------------------------------------------------------
 # Generate a response message for a GM request that has been added
@@ -173,7 +186,7 @@ async def genChangeResponseMsg(oldGMRequest:GMRequest, newGMRequest:GMRequest):
 #-------------------------------------------------------------------------------------------
 # Add a single GM request to the database
 #-------------------------------------------------------------------------------------------
-async def add_gm_req(name:str, server:str, gmsize) -> str:
+async def addGMReqEntry(name:str, server:str, gmsize) -> str:
   newGMRequest = GMRequest(name, server, gmsize)
   await insertIntoDB(newGMRequest)
   return await genAddResponseMsg(newGMRequest)
@@ -181,36 +194,36 @@ async def add_gm_req(name:str, server:str, gmsize) -> str:
 #-------------------------------------------------------------------------------------------
 # Add the given list of GM requests to the database
 #-------------------------------------------------------------------------------------------
-async def add_gm_reqs(reqs:List[str]) -> str:
-  gm_requests = [GMRequest(req) for req in reqs if req]
+async def addGMReqEntries(reqs:List[str]) -> str:
+  gmRequests = [GMRequest(req) for req in reqs if req]
   msg = "*Added **"
-  dupnames = 0
-  for gm_request in gm_requests:
-    valname = await validate_name(gm_request.name)
-    if valname != gm_request.name:
-      gm_request.name = valname
-      dupnames += 1
-    msg += gm_request.name + "**  ,  **"
-    if "gm_reqs" in db.keys():
-      db["gm_reqs"].append(vars(gm_request))
+  dupNames = 0
+  for gmRequest in gmRequests:
+    valname = await validateName(gmRequest.name)
+    if valname != gmRequest.name:
+      gmRequest.name = valname
+      dupNames += 1
+    msg += gmRequest.name + "**  ,  **"
+    if gmReqTable in db.keys():
+      db[gmReqTable].append(vars(gmRequest))
     else:
-      db["gm_reqs"] = [vars(gm_request)]
+      db[gmReqTable] = [vars(gmRequest)]
   msg += "END"
   msg = msg.replace("**  ,  **END", "***")
-  if dupnames > 1:
+  if dupNames > 1:
     msg += "\n*(Request names modified due to duplicates)*"
-  elif dupnames > 0:
+  elif dupNames > 0:
     msg += "\n*(Request name modified due to duplicates)*"
   return msg
 
 #-------------------------------------------------------------------------------------------
 # Delete a single GM request from the database
 #-------------------------------------------------------------------------------------------
-async def delete_gm_req(request:str) -> str:
-  gm_req = await find_gm_req(request)
-  if gm_req:
-    oldGMRequest = GMRequest.fromDict(gm_req)
-    db["gm_reqs"].remove(gm_req)
+async def deleteGMReqEntry(request:str) -> str:
+  gmReqEntry = await findGMReqEntry(request)
+  if gmReqEntry:
+    oldGMRequest = GMRequest.fromDict(gmReqEntry)
+    db[gmReqTable].remove(gmReqEntry)
     return await genDeleteResponseMsg(oldGMRequest)
   else:
     return None
@@ -218,90 +231,82 @@ async def delete_gm_req(request:str) -> str:
 #-------------------------------------------------------------------------------------------
 # Edit a single GM request in the database
 #-------------------------------------------------------------------------------------------
-async def edit_gm_req(oldname:str, name:str, server:str, gmsize:str) -> str:
-  gm_req = await find_gm_req(oldname)
-  if gm_req:
-    oldGMRequest = GMRequest.fromDict(gm_req)
+async def editGMReqEntry(oldname:str, name:str, server:str, gmsize:str) -> str:
+  gmReqEntry = await findGMReqEntry(oldname)
+  if gmReqEntry:
+    oldGMRequest = GMRequest.fromDict(gmReqEntry)
     newGMRequest = GMRequest.withDefaults(name, server, gmsize, oldGMRequest)
 
-    dupname = False
+    dupName = False
     if newGMRequest.name != oldGMRequest.name:
-      valnewname = await validate_name(newGMRequest.name)
+      valnewname = await validateName(newGMRequest.name)
       if valnewname != newGMRequest.name:
         newGMRequest.name = valnewname
-        dupname = True
+        dupName = True
 
-    await updateDB(db["gm_reqs"].index(gm_req), newGMRequest)
+    await updateDB(db[gmReqTable].index(gmReqEntry), newGMRequest)
 
     msg = await genChangeResponseMsg(oldGMRequest, newGMRequest)
-    msg += "\n*(Request name modified due to duplicates)*" if dupname else ""
+    msg += "\n*(Request name modified due to duplicates)*" if dupName else ""
     return msg
   else:
     return None
 
 #-------------------------------------------------------------------------------------------
-# If a GM request exists for the given name, update its server and gmsize values.
-# Otherwise, add it as a new gm request.
+# For the GM request matching the given name, set the server and gmsize values.
+# If a GM request exists, update its server and gmsize values.
+# Otherwise, add it as a new GM request.
 #-------------------------------------------------------------------------------------------
-async def set_gm_req_server(name:str, server:str, gmsize:str) -> str:
-  gm_req = await find_gm_req(name)
-  if gm_req:
-    oldGMRequest = GMRequest.fromDict(gm_req)
+async def setGMServerAndSize(name:str, server:str, gmsize:str) -> str:
+  gmReqEntry = await findGMReqEntry(name)
+  if gmReqEntry:
+    oldGMRequest = GMRequest.fromDict(gmReqEntry)
     newGMRequest = GMRequest(name, server, gmsize)
-    await updateDB(db["gm_reqs"].index(gm_req), newGMRequest)
+    await updateDB(db[gmReqTable].index(gmReqEntry), newGMRequest)
     return await genChangeResponseMsg(oldGMRequest, newGMRequest)
   else:
-    return await add_gm_req(name, server, gmsize)
+    return await addGMReqEntry(name, server, gmsize)
 
 #-------------------------------------------------------------------------------------------
 # Clear all GM requests from the DB
 #-------------------------------------------------------------------------------------------
-async def clear_gm_reqs():
-  if "gm_reqs" in db.keys():
-    del db["gm_reqs"]
+async def clearGMReqTable():
+  if gmReqTable in db.keys():
+    del db[gmReqTable]
 
 #-------------------------------------------------------------------------------------------
 # Update the number of Garmoth scroll pieces in the DB
 #-------------------------------------------------------------------------------------------
-async def update_garmy_pieces(pieces):
+async def updateGarmyPieces(pieces):
   db['garmy_pieces'] = pieces
 
 #-------------------------------------------------------------------------------------------
 # Generate and return an embed with the current list of GM requests
 #-------------------------------------------------------------------------------------------
-async def get_gm_list_embed() -> discord.Embed:
+async def genGMListEmbed() -> discord.Embed:
   embyTitle = "Current GM Requests"
-  gm_requests = await get_gm_requests()
-  if len(gm_requests):
-    gm_list = "**"
-    for gm_request in gm_requests:
-      gm_list += str(gm_request.name)
-      if gm_request.server:
-        gm_list += " :white_check_mark: " + gm_request.server
-        if gm_request.gmsize:
-          gm_list += " " + gm_request.gmsize
-      gm_list += "\n"
-    gm_list += "**"
+  gmRequests = await getCurrentGMRequestList()
+  if len(gmRequests):
+    gmList = "**"
+    for gmRequest in gmRequests:
+      gmList += str(gmRequest.name)
+      if gmRequest.server:
+        gmList += " :white_check_mark: " + gmRequest.server
+        if gmRequest.gmsize:
+          gmList += " " + gmRequest.gmsize
+      gmList += "\n"
+    gmList += "**"
   else:
-    gm_list = "*<GM request list is empty>*"
-  gm_list += "\n"
+    gmList = "*<GM request list is empty>*"
+  gmList += "\n"
   
   emby = discord.Embed(title=embyTitle,
-                       description=gm_list,
-                       colour=discord.Colour.green())
-  
-  pieces = 0
-  if "garmy_pieces" in db.keys():
-    pieces = db["garmy_pieces"]
-    
+                       description=gmList,
+                       colour=discord.Colour.blue())
+
+  pieces = db["garmy_pieces"] if "garmy_pieces" in db.keys() else 0
   garmy_status = "Garmoth Scroll Status: "
-  if pieces > 4:
-    garmy_status += "Complete!"
-  else:
-    garmy_status += str(pieces) + "/5"
-  
-  emby.set_footer(
-    text=garmy_status,
-    icon_url="https://bdocodex.com/items/ui_artwork/ic_05154.png")
+  garmy_status += "Complete!" if pieces > 4 else str(pieces) + "/5"
+  emby.set_footer(text=garmy_status, icon_url=garmyURL)
 
   return emby
