@@ -9,6 +9,8 @@ from common.common import gmServers
 from common.common import gmSizes
 from common.common import noServer
 from common.common import noSize
+from common.common import GMRequest
+
 #import asyncio
 
 # TODO:
@@ -21,12 +23,12 @@ from common.common import noSize
 class GMRequests(commands.Cog):
   def __init__(self, bot:commands.Bot) -> None:
     self.bot = bot
-
+  
   #----------------------------------------------
   # gmlist
   #----------------------------------------------
   @app_commands.command(name="gmlist",
-                        description="Display the GM request list")
+                        description="Display the GM list")
   # TODO: @check_for_purge
   async def gmlist(self, interaction:discord.Interaction) -> None:
     await self.bot.logCommand("gmlist", interaction.user.name)
@@ -36,86 +38,92 @@ class GMRequests(commands.Cog):
   #----------------------------------------------
   # gmadd
   #----------------------------------------------
-  @app_commands.command(name="gmadd",
-                        description="Add a GM request to the list")
-  @app_commands.describe(request  = "Enter a request (ex. Pollys - Patty)",
-                         request2 = "Enter a second request",
-                         request3 = "Enter a third request",
-                         request4 = "Enter a fourth request",
-                         request5 = "Enter a final request")
+  @app_commands.command(name="gmadd", description="Add a GM to the list")
+  @app_commands.describe(name   = "Enter a GM name (ex. Pollys - Patty)",
+                         server = "Enter the GM server",
+                         size   = "Enter the GM size")
   async def gmadd(self, interaction:discord.Interaction,
-                  request:str, request2:str=None, request3:str=None,
-                  request4:str=None, request5:str=None) -> None:
+                  name:str, server:str=None, size:str=None) -> None:
     await self.bot.logCommand("gmadd", interaction.user.name)
-    reqs = [request, request2, request3, request4, request5]
-    reqstr = await common.addGMReqEntries(reqs)
+    gmRequests = [GMRequest(name,server,size)]
+    msg = await common.addGMReqEntries(gmRequests)
     # FIXME: Trying to syncronize add commands, but it's not working so far.
     # async with self.bot.db_lock:
     #     - or - 
     # asyncio.sleep(1)
     emby = await common.genGMListEmbed()
-    await interaction.response.send_message(content=reqstr, embed=emby)
+    await interaction.response.send_message(content=msg, embed=emby)
+
+  @gmadd.autocomplete('server')
+  async def gmadd_autocomplete_server(self, interaction: discord.Interaction,
+                                       current: str) -> List[Choice[str]]:
+    return [Choice(name=server, value=server)
+            for server in common.gmServers if current.lower() in server.lower() and server != noServer]
 
   #----------------------------------------------
   # gmfound
   #----------------------------------------------
-  @app_commands.command(name="gmfound",
-                        description="Indicate that a GM request has been found")
-  @app_commands.describe(request = "Select an existing request (or enter a new request)")
-  @app_commands.describe(server = "Enter the server for the GM (Select '" + noServer + "' to leave blank)")
-  @app_commands.describe(size = "Enter the size of the GM (Select '" + noSize + "' to leave blank)")
-  async def gmfound(self, interaction:discord.Interaction,
-                    request:str, server:str, size:str):
-    await self.bot.logCommand("gmfound", interaction.user.name)
-    msg = await common.setGMServerAndSize(request, server, size)
-    emby = await common.genGMListEmbed()
-    await interaction.response.send_message(content=msg, embed=emby)
+  # @app_commands.command(name="gmfound",
+  #                       description="Edit the server and size for a GM")
+  # @app_commands.describe(gm = "Select an existing GM")
+  # @app_commands.describe(server = "Enter the GM server (Select " + noServer + " to erase the current server)")
+  # @app_commands.describe(size = "Enter the GM size (Select " + noSize + " to erase the current size)")
+  # async def gmfound(self, interaction:discord.Interaction,
+  #                   gm:str, server:str=None, size:str=None):
+  #   await self.bot.logCommand("gmfound", interaction.user.name)
+  #   msg = await common.setGMServerAndSize(gm, server, size)
+  #   if msg:
+  #     emby = await common.genGMListEmbed()
+  #     await interaction.response.send_message(content=msg, embed=emby)
+  #   else:
+  #     await interaction.response.send_message(
+  #       content=f':frowning: Sorry, there is no GM in the list called **{gm}**')
 
-  @gmfound.autocomplete('request')
-  async def gmfound_autocomplete_request(self, interaction: discord.Interaction,
-                                         current: str) -> List[Choice[str]]:
-    gm_requests = await common.getCurrentGMRequestList()
-    return [Choice(name=gm_request.name, value=gm_request.name)
-            for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
+  # @gmfound.autocomplete('gm')
+  # async def gmfound_autocomplete_gm(self, interaction: discord.Interaction,
+  #                                   current: str) -> List[Choice[str]]:
+  #   gmList = await common.getGMList()
+  #   return [Choice(name=gm, value=gm)
+  #           for gm in gmList if current.lower() in gm.lower()]
 
-  @gmfound.autocomplete('server')
-  async def gmfound_autocomplete_server(self, interaction: discord.Interaction,
-                                        current: str) -> List[Choice[str]]:
-    return [Choice(name=server, value=server)
-            for server in gmServers if current.lower() in server.lower()]
+  # @gmfound.autocomplete('server')
+  # async def gmfound_autocomplete_server(self, interaction: discord.Interaction,
+  #                                       current: str) -> List[Choice[str]]:
+  #   return [Choice(name=server, value=server)
+  #           for server in gmServers if current.lower() in server.lower()]
 
-  @gmfound.autocomplete('size')
-  async def gmfound_autocomplete_size(self, interaction: discord.Interaction,
-                                      current: str) -> List[Choice[str]]:
-    return [Choice(name=size, value=size)
-            for size in gmSizes if current.lower() in size.lower()]
+  # @gmfound.autocomplete('size')
+  # async def gmfound_autocomplete_size(self, interaction: discord.Interaction,
+  #                                     current: str) -> List[Choice[str]]:
+  #   return [Choice(name=size, value=size)
+  #           for size in gmSizes if current.lower() in size.lower()]
 
   #----------------------------------------------
   # gmedit
   #----------------------------------------------
-  @app_commands.command(name="gmedit", description="Edit a GM request in the list")
-  @app_commands.describe(request = "Select the request to edit")
-  @app_commands.describe(newtext = "Enter the new text for the request")
-  @app_commands.describe(server = "Enter the server for the GM (Select '" + noServer + "' to leave blank)")
-  @app_commands.describe(size = "Enter the size of the GM (Select '" + noSize + "' to leave blank)")
-  async def gmedit(self, interaction: discord.Interaction, request:str,
-                   newtext:str, server:str=None, size:str=None):
+  @app_commands.command(name="gmedit", description="Edit a GM in the list")
+  @app_commands.describe(gm = "Select the GM to edit")
+  @app_commands.describe(name = "Enter a GM name (ex. Pollys - Patty)")
+  @app_commands.describe(server = "Enter the GM server (Select " + noServer + " to erase the current server)")
+  @app_commands.describe(size = "Enter the GM size (Select " + noSize + " to erase the current size)")
+  async def gmedit(self, interaction: discord.Interaction, gm:str,
+                   server:str=None, size:str=None, name:str=None):
     await self.bot.logCommand("gmedit", interaction.user.name)
-    msg = await common.editGMReqEntry(request, newtext, server, size)
+    msg = await common.editGMReqEntry(gm, name, server, size)
     if msg:
       emby = await common.genGMListEmbed()
       await interaction.response.send_message(content=msg, embed=emby)
     else:
       await interaction.response.send_message(
-        content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
+        content=f':frowning: Sorry, there is no GM in the list called **{gm}**')
 
-  @gmedit.autocomplete('request')
-  async def gmedit_autocomplete(self, interaction: discord.Interaction,
-                                current: str) -> List[Choice[str]]:
-    gm_requests = await common.getCurrentGMRequestList()
-    return [Choice(name=gm_request.name, value=gm_request.name)
-            for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
-
+  @gmedit.autocomplete('gm')
+  async def gmedit_autocomplete_gm(self, interaction: discord.Interaction,
+                                   current: str) -> List[Choice[str]]:
+    gmList = await common.getGMList()
+    return [Choice(name=gm, value=gm)
+            for gm in gmList if current.lower() in gm.lower()]
+                      
   @gmedit.autocomplete('server')
   async def gmedit_autocomplete_server(self, interaction: discord.Interaction,
                                        current: str) -> List[Choice[str]]:
@@ -132,35 +140,56 @@ class GMRequests(commands.Cog):
   # gmdelete
   #----------------------------------------------
   @app_commands.command(name="gmdelete",
-                        description="Delete a GM request from the list")
-  @app_commands.describe(request = "Select the request to delete")
-  async def gmdelete(self, interaction: discord.Interaction, request:str):
+                        description="Delete a GM from the list")
+  @app_commands.describe(gm = "Select the GM to delete")
+  async def gmdelete(self, interaction: discord.Interaction, gm:str):
     await self.bot.logCommand("gmdelete", interaction.user.name)
-    msg = await common.deleteGMReqEntry(request) 
+    msg = await common.deleteGMReqEntry(gm) 
     if msg:
       emby = await common.genGMListEmbed()
       await interaction.response.send_message(content=msg, embed=emby)
     else:
       await interaction.response.send_message(
-        content=f':frowning: *Sorry, there is no GM request in the list called **{request}***')
+        content=f':frowning: Sorry, there is no GM in the list called **{gm}**')
     
-  @gmdelete.autocomplete('request')
-  async def gmdelete_autocomplete(self, interaction:discord.Interaction,
-                                  current:str) -> List[Choice[str]]:
-    gm_requests = await common.getCurrentGMRequestList()
-    return [Choice(name=gm_request.name, value=gm_request.name)
-            for gm_request in gm_requests if current.lower() in gm_request.name.lower()]
+  @gmdelete.autocomplete('gm')
+  async def gmdelete_autocomplete_gm(self, interaction:discord.Interaction,
+                                     current:str) -> List[Choice[str]]:
+    gmList = await common.getGMList()
+    return [Choice(name=gm, value=gm)
+            for gm in gmList if current.lower() in gm.lower()]
+
+  #----------------------------------------------
+  # gmquickadd
+  #----------------------------------------------
+  @app_commands.command(name="gmquickadd",
+                        description="Add several GM names to the list (no server or size info)")
+  @app_commands.describe(name  = "Enter a GM name (ex. Pollys - Patty)",
+                         name2 = "Enter a 2nd name",
+                         name3 = "Enter a 3rd name",
+                         name4 = "Enter a 4th name",
+                         name5 = "Enter a 5th name",
+                         name6 = "Enter a 6th name")
+  async def gmquickadd(self, interaction:discord.Interaction, name:str,
+                         name2:str=None, name3:str=None, name4:str=None,
+                         name5:str=None, name6:str=None) -> None:
+    await self.bot.logCommand("gmquickadd", interaction.user.name)
+    gmRequests = [GMRequest(name), GMRequest(name2), GMRequest(name3),
+                  GMRequest(name4), GMRequest(name5), GMRequest(name6)]
+    msg = await common.addGMReqEntries(gmRequests)
+    emby = await common.genGMListEmbed()
+    await interaction.response.send_message(content=msg, embed=emby)
 
   #----------------------------------------------
   # gmclear
   #----------------------------------------------
   @app_commands.command(name="gmclear",
-                        description="Clear the entire GM request list")
+                        description="Clear the entire GM list")
   async def gmclear(self, interaction:discord.Interaction) -> None:
     await self.bot.logCommand("gmclear", interaction.user.name)
     await common.clearGMReqTable()
     emby = await common.genGMListEmbed()
-    await interaction.response.send_message(content="*Request list cleared*",
+    await interaction.response.send_message(content="GM list cleared",
                                             embed=emby)
 
   #----------------------------------------------
@@ -171,11 +200,9 @@ class GMRequests(commands.Cog):
   @app_commands.describe(pieces="Enter the current number of scroll pieces")
   async def gmgarmy(self, interaction:discord.Interaction, pieces:int):
     await self.bot.logCommand("gmgarmy", interaction.user.name)
-    await common.updateGarmyPieces(pieces)
+    msg = await common.updateGarmyPieces(pieces)
     emby = await common.genGMListEmbed()
-    await interaction.response.send_message(
-      content="*Updated **Garmoth Scroll Status** to **" + str(pieces) + "** pieces*", 
-      embed=emby)
+    await interaction.response.send_message(content=msg, embed=emby)
 
 async def setup(bot:commands.Bot) -> None:
   await bot.add_cog(GMRequests(bot), guilds=guildIDs)
