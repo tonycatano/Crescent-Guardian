@@ -3,13 +3,13 @@ import discord
 from typing import List
 from replit import db
 
-# TODO: The following few items will be moved to a new file called 'genutils'
+# TODO: The following three items (and any other common items) will 
+#       remain in this file. The rest will be moved to a new file
+#       called GuildMission.py
 guildIDs=[discord.Object(id=os.environ['DISCORD_SERVER_ID'])]
 connectionLogFile = "logs/rocg.connection.log"
 commandLogFile = "logs/rocg.command.log"
 
-# TODO: The rest of this stuff will remain in this file, but the file will be
-#       renamed to 'gmrequest.py' after the class defined in this file.
 gmReqTable = "gm_reqs"
 gmReqNameKey = "name"
 gmReqServerKey = "server"
@@ -36,10 +36,10 @@ gmSizes = [noSize]
 quickNames = ["Hasrah Ruins", "Soldiers", "Bashims", "Cadrys", "Crescents", "Nagas "]
 
 #-------------------------------------------------------------------------------------------
-# The GMRequest class encapsulates the different attributes of a GM request
+# The GuildMission class encapsulates the different attributes of a Guild Mission
 #-------------------------------------------------------------------------------------------
-class GMRequest:
-  # Create an instance of GMRequest
+class GuildMission:
+  # Create an instance of GuildMission
   def __init__(self, name:str, server:str=None, gmsize=None):
     self.name = name
     self.server = server
@@ -47,27 +47,27 @@ class GMRequest:
 
   # Define the equality comparison operator
   def __eq__(self, other):
-    if (isinstance(other, GMRequest)):
+    if (isinstance(other, GuildMission)):
       return self.name == other.name and \
              self.serverForDB() == other.serverForDB() and \
              self.gmsizeForDB() == other.gmsizeForDB()
     return False
 
-  # Create and return an instance of GMRequest from a DB dict type
+  # Create and return an instance of GuildMission from a DB dict type
   @staticmethod
   def fromDict(gmReqEntry:dict):
-    return GMRequest(gmReqEntry[gmReqNameKey], gmReqEntry[gmReqServerKey], gmReqEntry[gmReqSizeKey])
+    return GuildMission(gmReqEntry[gmReqNameKey], gmReqEntry[gmReqServerKey], gmReqEntry[gmReqSizeKey])
 
-  # Create and return an instance of GMRequest, replacing None values with the
+  # Create and return an instance of GuildMission, replacing None values with the
   # given default values
   @staticmethod
   def withDefaults(name:str, server:str, gmsize:str, defaults):
-    gmRequest = GMRequest(name, server, gmsize)
-    gmRequest.name   = defaults.name   if not gmRequest.name   else gmRequest.name
-    gmRequest.server = defaults.server if not gmRequest.server else gmRequest.server
-    gmRequest.gmsize = defaults.gmsize if not gmRequest.gmsize else gmRequest.gmsize
-    gmRequest.gmsize = None if not gmRequest.server else gmRequest.gmsize
-    return gmRequest
+    guildMission = GuildMission(name, server, gmsize)
+    guildMission.name   = defaults.name   if not guildMission.name   else guildMission.name
+    guildMission.server = defaults.server if not guildMission.server else guildMission.server
+    guildMission.gmsize = defaults.gmsize if not guildMission.gmsize else guildMission.gmsize
+    guildMission.gmsize = None if not guildMission.server else guildMission.gmsize
+    return guildMission
 
   # If the given gmsize is a numeric, add an 'x' at the beginning
   def fixSize(self, gmsize:str):
@@ -95,17 +95,17 @@ class GMRequest:
 
   # Prep for the DB by setting any noSize and noServer values to None
   def forDB(self):
-    return GMRequest(self.name, self.serverForDB(), self.gmsizeForDB())
+    return GuildMission(self.name, self.serverForDB(), self.gmsizeForDB())
 
 #-------------------------------------------------------------------------------------------
-# Get the GMs from the DB and return them as a list of GMRequest types 
+# Get the GMs from the DB and return them as a list of GuildMission types 
 #-------------------------------------------------------------------------------------------
-async def getCurrentGMRequestList() -> List[GMRequest]:
-  gmRequests = []
+async def getCurrentGuildMissionList() -> List[GuildMission]:
+  guildMissions = []
   if gmReqTable in db.keys():
     for gmReqEntry in db[gmReqTable]:
-      gmRequests.append(GMRequest.fromDict(gmReqEntry))
-  return gmRequests
+      guildMissions.append(GuildMission.fromDict(gmReqEntry))
+  return guildMissions
 
 #-------------------------------------------------------------------------------------------
 # Get the GMs from the DB and return them as a list of strings in the following format:
@@ -113,14 +113,14 @@ async def getCurrentGMRequestList() -> List[GMRequest]:
 #-------------------------------------------------------------------------------------------
 async def getGMList() -> List[str]:
   gmList = []
-  gmRequests = await getCurrentGMRequestList() 
-  for gmRequest in gmRequests:
-    gm = gmRequest.name
-    if gmRequest.server:
-      if gmRequest.gmsize:
-        gm += serverDelim + gmRequest.server + " " + gmRequest.gmsize
+  guildMissions = await getCurrentGuildMissionList() 
+  for guildMission in guildMissions:
+    gm = guildMission.name
+    if guildMission.server:
+      if guildMission.gmsize:
+        gm += serverDelim + guildMission.server + " " + guildMission.gmsize
       else:
-        gm += serverDelim + gmRequest.server
+        gm += serverDelim + guildMission.server
     gmList.append(gm)
   return gmList
 
@@ -157,83 +157,83 @@ async def extractName(gm:str) -> str:
 #-------------------------------------------------------------------------------------------
 # For the GM with the given index in the DB, update it with the given new GM values
 #-------------------------------------------------------------------------------------------
-async def updateDB(index:int, newGMRequest:GMRequest):
-  newGMRequest = newGMRequest.forDB()
-  db[gmReqTable][index][gmReqNameKey]   = newGMRequest.name
-  db[gmReqTable][index][gmReqServerKey] = newGMRequest.server
-  db[gmReqTable][index][gmReqSizeKey]   = newGMRequest.gmsize if newGMRequest.server else None
+async def updateDB(index:int, guildMission:GuildMission):
+  guildMission = guildMission.forDB()
+  db[gmReqTable][index][gmReqNameKey]   = guildMission.name
+  db[gmReqTable][index][gmReqServerKey] = guildMission.server
+  db[gmReqTable][index][gmReqSizeKey]   = guildMission.gmsize if guildMission.server else None
 
 #-------------------------------------------------------------------------------------------
 # Insert the given GM into the DB
 #-------------------------------------------------------------------------------------------
-async def insertIntoDB(newGMRequest:GMRequest):
-  newGMRequest = newGMRequest.forDB()
+async def insertIntoDB(guildMission:GuildMission):
+  guildMission = guildMission.forDB()
   if gmReqTable in db.keys():
-    db[gmReqTable].append(vars(newGMRequest))
+    db[gmReqTable].append(vars(guildMission))
   else:
-    db[gmReqTable] = [vars(newGMRequest)]
+    db[gmReqTable] = [vars(guildMission)]
 
 #-------------------------------------------------------------------------------------------
 # Generate a response message for a GM that has been deleted
 #-------------------------------------------------------------------------------------------
-async def genDeleteResponseMsg(oldGMRequest:GMRequest):
-  oldGMRequest = oldGMRequest.forDB()
-  msg="Deleted **" + oldGMRequest.name
-  if oldGMRequest.server:
-    if oldGMRequest.gmsize:
-      msg += serverDelim + oldGMRequest.server + " " + oldGMRequest.gmsize
+async def genDeleteResponseMsg(guildMission:GuildMission):
+  guildMission = guildMission.forDB()
+  msg="Deleted **" + guildMission.name
+  if guildMission.server:
+    if guildMission.gmsize:
+      msg += serverDelim + guildMission.server + " " + guildMission.gmsize
     else:
-      msg += serverDelim + oldGMRequest.server
+      msg += serverDelim + guildMission.server
   msg += "**"
   return msg
 
 #-------------------------------------------------------------------------------------------
 # Generate a response message for a GM that has been changed
 #-------------------------------------------------------------------------------------------
-async def genChangeResponseMsg(oldGMRequest:GMRequest, newGMRequest:GMRequest):
-  oldGMRequest = oldGMRequest.forDB()
-  newGMRequest = newGMRequest.forDB()
-  if oldGMRequest != newGMRequest:
-    msg = "Changed **" + oldGMRequest.name
-    if oldGMRequest.server:
-      if oldGMRequest.gmsize:
-        msg += serverDelim + oldGMRequest.server + " " + oldGMRequest.gmsize
+async def genChangeResponseMsg(oldGuildMission:GuildMission, newGuildMission:GuildMission):
+  oldGuildMission = oldGuildMission.forDB()
+  newGuildMission = newGuildMission.forDB()
+  if oldGuildMission != newGuildMission:
+    msg = "Changed **" + oldGuildMission.name
+    if oldGuildMission.server:
+      if oldGuildMission.gmsize:
+        msg += serverDelim + oldGuildMission.server + " " + oldGuildMission.gmsize
       else:
-        msg += serverDelim + oldGMRequest.server
-    msg += "**\n             to **" + newGMRequest.name
-    if newGMRequest.server:
-      if newGMRequest.gmsize:
-        msg += serverDelim + newGMRequest.server + " " + newGMRequest.gmsize
+        msg += serverDelim + oldGuildMission.server
+    msg += "**\n             to **" + newGuildMission.name
+    if newGuildMission.server:
+      if newGuildMission.gmsize:
+        msg += serverDelim + newGuildMission.server + " " + newGuildMission.gmsize
       else:
-        msg += serverDelim + newGMRequest.server
+        msg += serverDelim + newGuildMission.server
     msg += "**"
     return msg
   else:
-    return "Nothing changed for **" + oldGMRequest.name + "**"
+    return "Nothing changed for **" + oldGuildMission.name + "**"
 
 #-------------------------------------------------------------------------------------------
 # Add the given list of GMs to the database
 #-------------------------------------------------------------------------------------------
-async def addGMReqEntries(gmRequests:List[GMRequest]) -> str:
+async def addGMReqEntries(guildMissions:List[GuildMission]) -> str:
   msg = "Added "
   dupNames = 0
   iteration = 0
-  for gmRequest in gmRequests:
+  for guildMission in guildMissions:
     iteration += 1
-    if gmRequest.name:
+    if guildMission.name:
 
-      valname = await validateName(gmRequest.name)
-      if valname != gmRequest.name:
-        gmRequest.name = valname
+      valname = await validateName(guildMission.name)
+      if valname != guildMission.name:
+        guildMission.name = valname
         dupNames += 1
 
       msg += "**" if iteration == 1 else ",  **" 
-      msg += gmRequest.name
-      msg += serverDelim + gmRequest.server if gmRequest.server else ""
-      msg += " " + gmRequest.gmsize if gmRequest.gmsize and gmRequest.server else ""
+      msg += guildMission.name
+      msg += serverDelim + guildMission.server if guildMission.server else ""
+      msg += " " + guildMission.gmsize if guildMission.gmsize and guildMission.server else ""
       msg += "**"
 
-      await insertIntoDB(gmRequest)
+      await insertIntoDB(guildMission)
 
   if dupNames > 1:
     msg += "\n*(GM names modified due to duplicates)*"
@@ -247,9 +247,9 @@ async def addGMReqEntries(gmRequests:List[GMRequest]) -> str:
 async def deleteGMReqEntry(gm:str) -> str:
   gmReqEntry = await findGMReqEntry(await extractName(gm))
   if gmReqEntry:
-    oldGMRequest = GMRequest.fromDict(gmReqEntry)
+    oldGuildMission = GuildMission.fromDict(gmReqEntry)
     db[gmReqTable].remove(gmReqEntry)
-    return await genDeleteResponseMsg(oldGMRequest)
+    return await genDeleteResponseMsg(oldGuildMission)
   else:
     return None
 
@@ -259,19 +259,19 @@ async def deleteGMReqEntry(gm:str) -> str:
 async def editGMReqEntry(gm:str, name:str, server:str, gmsize:str) -> str:
   gmReqEntry = await findGMReqEntry(await extractName(gm))
   if gmReqEntry:
-    oldGMRequest = GMRequest.fromDict(gmReqEntry)
-    newGMRequest = GMRequest.withDefaults(name, server, gmsize, oldGMRequest)
+    oldGuildMission = GuildMission.fromDict(gmReqEntry)
+    newGuildMission = GuildMission.withDefaults(name, server, gmsize, oldGuildMission)
 
     dupName = False
-    if newGMRequest.name != oldGMRequest.name:
-      valnewname = await validateName(newGMRequest.name)
-      if valnewname != newGMRequest.name:
-        newGMRequest.name = valnewname
+    if newGuildMission.name != oldGuildMission.name:
+      valnewname = await validateName(newGuildMission.name)
+      if valnewname != newGuildMission.name:
+        newGuildMission.name = valnewname
         dupName = True
 
-    await updateDB(db[gmReqTable].index(gmReqEntry), newGMRequest)
+    await updateDB(db[gmReqTable].index(gmReqEntry), newGuildMission)
 
-    msg = await genChangeResponseMsg(oldGMRequest, newGMRequest)
+    msg = await genChangeResponseMsg(oldGuildMission, newGuildMission)
     msg += "\n*(GM name modified due to duplicates)*" if dupName else ""
     return msg
   else:
@@ -283,10 +283,10 @@ async def editGMReqEntry(gm:str, name:str, server:str, gmsize:str) -> str:
 async def setGMServerAndSize(gm:str, server:str, gmsize:str) -> str:
   gmReqEntry = await findGMReqEntry(await extractName(gm))
   if gmReqEntry:
-    oldGMRequest = GMRequest.fromDict(gmReqEntry)
-    newGMRequest = GMRequest.withDefaults(None, server, gmsize, oldGMRequest)
-    await updateDB(db[gmReqTable].index(gmReqEntry), newGMRequest)
-    return await genChangeResponseMsg(oldGMRequest, newGMRequest)
+    oldGuildMission = GuildMission.fromDict(gmReqEntry)
+    newGuildMission = GuildMission.withDefaults(None, server, gmsize, oldGuildMission)
+    await updateDB(db[gmReqTable].index(gmReqEntry), newGuildMission)
+    return await genChangeResponseMsg(oldGuildMission, newGuildMission)
   else:
     return None
 
@@ -315,13 +315,13 @@ async def updateGarmyPieces(pieces:int) -> str:
 #-------------------------------------------------------------------------------------------
 async def genGMListEmbed() -> discord.Embed:
   embyTitle = "Guild Missions"
-  gmRequests = await getCurrentGMRequestList()
-  if len(gmRequests):
+  guildMissions = await getCurrentGuildMissionList()
+  if len(guildMissions):
     gmList = "**"
-    for gmRequest in gmRequests:
-      gmList += str(gmRequest.name)
-      gmList += checkMark + gmRequest.server if gmRequest.server else blankMark
-      gmList += " " + gmRequest.gmsize if gmRequest.gmsize else ""
+    for guildMission in guildMissions:
+      gmList += str(guildMission.name)
+      gmList += checkMark + guildMission.server if guildMission.server else blankMark
+      gmList += " " + guildMission.gmsize if guildMission.gmsize else ""
       gmList += "\n"
     gmList += "**"
   else:
