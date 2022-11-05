@@ -9,7 +9,7 @@ from common.common import gmServers
 from common.common import gmSizes
 from common.common import noServer
 from common.common import noSize
-from common.common import GMRequest
+from common.common import GuildMission
 
 #import asyncio
 
@@ -20,7 +20,7 @@ from common.common import GMRequest
 #     await func(self, interaction)
 #   return inner
 
-class GMRequests(commands.Cog):
+class GMCommands(commands.Cog):
   def __init__(self, bot:commands.Bot) -> None:
     self.bot = bot
   
@@ -45,8 +45,8 @@ class GMRequests(commands.Cog):
   async def gmadd(self, interaction:discord.Interaction,
                   name:str, server:str=None, size:str=None) -> None:
     await self.bot.logCommand("gmadd", interaction.user.name)
-    gmRequests = [GMRequest(name,server,size)]
-    msg = await common.addGMReqEntries(gmRequests)
+    guildMissions = [GuildMission(name,server,size)]
+    msg = await common.addGMReqEntries(guildMissions)
     # FIXME: Trying to syncronize add commands, but it's not working so far.
     # async with self.bot.db_lock:
     #     - or - 
@@ -174,9 +174,9 @@ class GMRequests(commands.Cog):
                          name2:str=None, name3:str=None, name4:str=None,
                          name5:str=None, name6:str=None) -> None:
     await self.bot.logCommand("gmquickadd", interaction.user.name)
-    gmRequests = [GMRequest(name), GMRequest(name2), GMRequest(name3),
-                  GMRequest(name4), GMRequest(name5), GMRequest(name6)]
-    msg = await common.addGMReqEntries(gmRequests)
+    guildMissions = [GuildMission(name), GuildMission(name2), GuildMission(name3),
+                  GuildMission(name4), GuildMission(name5), GuildMission(name6)]
+    msg = await common.addGMReqEntries(guildMissions)
     emby = await common.genGMListEmbed()
     await interaction.response.send_message(content=msg, embed=emby)
 
@@ -205,4 +205,4 @@ class GMRequests(commands.Cog):
     await interaction.response.send_message(content=msg, embed=emby)
 
 async def setup(bot:commands.Bot) -> None:
-  await bot.add_cog(GMRequests(bot), guilds=guildIDs)
+  await bot.add_cog(GMCommands(bot), guilds=guildIDs)
