@@ -1,0 +1,9 @@
+```
+Sun  -  Ginger
+Mon  -  Postal
+Tue  -  N/A
+Wed  -  Lycos
+Thu  -  N/A
+Fri  -  N/A
+Sat  -  Texi
+```

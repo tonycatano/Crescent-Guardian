@@ -1,0 +1,16 @@
+B1
+B2
+C1
+C2
+M1
+M2
+S1
+S2
+V
+A
+F1
+F2
+SS1
+SS2
+SS3
+-ERASE-

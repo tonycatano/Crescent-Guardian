@@ -46,9 +46,11 @@ class CrescentGuardianBot(commands.Bot):
     f.write(msg)
     f.close()
 
-  async def logCommand(self, cmd:str, usr:str):
-    x = datetime.datetime.now()
-    msg = str(x) + ": command:" + cmd + ", user:" + usr + "\n"
+  async def logCommand(self, interaction:discord.Interaction):
+    timeStamp = str(datetime.datetime.now())
+    user = ": " + interaction.user.name
+    cmd = ": " + interaction.command.name
+    msg = timeStamp + user + cmd + "\n"
     f = open(commandLogFile, "a")
     f.write(msg)
     f.close()
