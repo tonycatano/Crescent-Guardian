@@ -1,0 +1,7 @@
+**Crescent Guardian 1.2.0 Release Notes**
+
+The **/gmgarmy** command is now called **/gmscroll**. And it now supports updating the boss scroll piece count for Ferrid, Mudster, and Garmoth. Try it out! Have fun! :grin:
+
+The **/help** command is now a private message. And the help panel now contains a button to toggle the release notes if you wish to read them. :nerd:
+
+Several other arcane changes were made that I won't bore you with here. :wink:

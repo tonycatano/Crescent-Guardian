@@ -11,21 +11,9 @@ blankMark = ""
 checkMark = " :white_check_mark: "
 serverDelim = " ✓ "
 nameModifier = "ⁱ"
-garmyURL = "https://bdocodex.com/items/ui_artwork/ic_05154.png"
 
 noServer = "-ERASE-"
 noSize = "-ERASE-"
-
-# TODO: Make a superuser command '/season {on,off}' or '/cgconfig severlist'
-# to update the server list when a Season is active
-gmServers = [noServer, "SS1", "SS2", "SS3", "B1", "B2", "C1", "C2",
-             "M1", "M2", "S1", "S2", "Val", "Arsha"]
-#gmServers = [noServer, "B1", "B2", "C1", "C2", "M1", "M2", "S1", "S2",
-#              "Rulu", "Val", "Arsha"]
-
-gmSizes = [noSize]
-
-quickNames = ["Hasrah Ruins", "Soldiers", "Bashims", "Cadrys", "Crescents", "Nagas "]
 
 #-------------------------------------------------------------------------------------------
 # The GuildMission class encapsulates the different attributes of a Guild Mission
@@ -270,19 +258,6 @@ async def editGMReqEntry(gm:str, name:str, server:str, gmsize:str) -> str:
     return None
 
 #-------------------------------------------------------------------------------------------
-# Edit the server and gmsize for a GM
-#-------------------------------------------------------------------------------------------
-async def setGMServerAndSize(gm:str, server:str, gmsize:str) -> str:
-  gmReqEntry = await findGMReqEntry(await extractName(gm))
-  if gmReqEntry:
-    oldGuildMission = GuildMission.fromDict(gmReqEntry)
-    newGuildMission = GuildMission.withDefaults(None, server, gmsize, oldGuildMission)
-    await updateDB(db[gmReqTable].index(gmReqEntry), newGuildMission)
-    return await genChangeResponseMsg(oldGuildMission, newGuildMission)
-  else:
-    return None
-
-#-------------------------------------------------------------------------------------------
 # Clear all GMs from the DB
 #-------------------------------------------------------------------------------------------
 async def clearGMReqTable():
@@ -290,42 +265,69 @@ async def clearGMReqTable():
     del db[gmReqTable]
 
 #-------------------------------------------------------------------------------------------
-# Update the number of Garmoth scroll pieces in the DB
+# Update the number of Ferrid scroll pieces in the DB
 #-------------------------------------------------------------------------------------------
-async def updateGarmyPieces(pieces:int) -> str:
-  db['garmy_pieces'] = pieces
-  msg = "Updated **Garmoth Scroll Status** to **"
-  if pieces > 4:
-    msg += "Complete!**"
-  else:
-    msg += str(pieces) + "** "
-    msg += "piece" if pieces == 1 else "pieces"
+async def updateFerridPieces(pieces:int) -> str:
+  pieces = 4 if pieces > 4 else pieces
+  db['ferrid_pieces'] = pieces
+  msg = "Updated **Ferrid** scroll status to **" + str(pieces) + "** "
+  msg += "piece" if pieces == 1 else "pieces"
   return msg
 
+#-------------------------------------------------------------------------------------------
+# Update the number of Mudster scroll pieces in the DB
+#-------------------------------------------------------------------------------------------
+async def updateMudsterPieces(pieces:int) -> str:
+  pieces = 4 if pieces > 4 else pieces
+  db['mudster_pieces'] = pieces
+  msg = "Updated **Mudster** scroll status to **" + str(pieces) + "** "
+  msg += "piece" if pieces == 1 else "pieces"
+  return msg
+#-------------------------------------------------------------------------------------------
+# Update the number of Garmoth scroll pieces in the DB
+#-------------------------------------------------------------------------------------------
+async def updateGarmothPieces(pieces:int) -> str:
+  pieces = 5 if pieces > 5 else pieces
+  db['garmy_pieces'] = pieces
+  msg = "Updated **Garmoth** scroll status to **" + str(pieces) + "** "
+  msg += "piece" if pieces == 1 else "pieces"
+  return msg
 #-------------------------------------------------------------------------------------------
 # Generate and return an embed with the current list of GMs
 #-------------------------------------------------------------------------------------------
 async def genGMListEmbed() -> discord.Embed:
-  embyTitle = "Guild Missions"
+  embyTitle = "**Guild Missions**"
   guildMissions = await getCurrentGuildMissionList()
   if len(guildMissions):
     gmList = "**"
     for guildMission in guildMissions:
+      gmList += "\u2022 " # circle bullet
       gmList += str(guildMission.name)
       gmList += checkMark + guildMission.server if guildMission.server else blankMark
       gmList += " " + guildMission.gmsize if guildMission.gmsize else ""
       gmList += "\n"
     gmList += "**"
   else:
-    gmList = "*<GM list is empty>*"
-  
+    gmList = "*-- GM list is empty --*"
+
+  ferridPieces  = db["ferrid_pieces"] if "ferrid_pieces" in db.keys() else 0
+  mudsterPieces = db["mudster_pieces"] if "mudster_pieces" in db.keys() else 0
+  garmothPieces   = db["garmy_pieces"] if "garmy_pieces" in db.keys() else 0
+
+  scrollStatusTitle = "__"
+  for i in range (78):
+    scrollStatusTitle += " "
+  scrollStatusTitle += "__\n***Boss Scrolls***"
+  scrollStatus = "***Ferrid:** " + str(ferridPieces) + "/4 " + \
+                 "**Mudster:** " + str(mudsterPieces) + "/4 " + \
+                 "**Garmoth:** " + str(garmothPieces) + "/5*"
+
   emby = discord.Embed(title=embyTitle,
                        description=gmList,
                        colour=discord.Colour.blue())
 
-  pieces = db["garmy_pieces"] if "garmy_pieces" in db.keys() else 0
-  garmy_status = "Garmoth Scroll Status: "
-  garmy_status += "Complete!" if pieces > 4 else str(pieces) + "/5"
-  emby.set_footer(text=garmy_status, icon_url=garmyURL)
+  emby.add_field(name=scrollStatusTitle,
+                 value=scrollStatus,
+                 inline=False)
 
   return emby
