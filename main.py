@@ -1,11 +1,13 @@
 import os
 import discord
+import datetime
 from discord.ext import commands
 from common.common import guildIDs
 from common.common import connectionLogFile
-from common.common import commandLogFile
-import datetime
-import asyncio
+from common.common import sweepMessages
+from common.Logger import Logger
+from common.Format import Format as F
+from gui.ContextMenu import ContextMenu
 
 class CrescentGuardianBot(commands.Bot):
   def __init__(self):
@@ -15,48 +17,44 @@ class CrescentGuardianBot(commands.Bot):
                      intents=discord.Intents.all(),
                      help_command=None,
                      application_id=os.environ['BOT_APP_ID'])
-    self.synced = False
-    self.dbLock = asyncio.Lock()
+    Logger.initLogger("EventLogger")
+    self.contextMenu = ContextMenu(self)
 
   async def setup_hook(self):
-    filenames = [os.path.join(dp, f) for dp, dn, fn in os.walk("./cogs") for f in fn if f.endswith('.py')]
-    for filename in filenames:
-      extension = filename.replace("./", "").replace("/", ".").replace(".py", "")
-      await self.load_extension(extension)
-    if not self.synced:
-      for guild_id in guildIDs:
-        await self.tree.sync(guild=guild_id)
+    Logger.logInfo(self, "Booting " + str(self.user.name))
+    Logger.logInfo(self, "Loading cogs:")
+    cogs = [f'cogs.{f[:-3]}' for f in os.listdir('./cogs') if f.endswith('.py')]
+    for cog in cogs:
+      Logger.logInfo(self, cog)
+      await self.load_extension(cog)
+    Logger.logInfo(self, "Syncing bot commands:")
+    for guild in guildIDs:
+      Logger.logInfo(self, "Guild ID: " + str(guild.id))
+      commands = await self.tree.sync(guild=guild)
+    for command in commands:
+      Logger.logInfo(self, "command: " + command.name)
 
   async def on_ready(self):
-    await self.logConnection("Logged in as " + str(self.user.name))
-    print("\nLogged in as " + '\033[95m' + str(self.user.name) + '\033[0m')
+    msg = "Logged in as " + str(self.user.name)
+    with open(connectionLogFile, "a") as file:
+      file.write(str(datetime.datetime.now()) + ": " + msg + "\n")
+    Logger.logInfo(self, msg)
+    await sweepMessages(self)
     await self.change_presence(activity=discord.Activity(
       type=discord.ActivityType.watching, name="Guild"))
+    msg = "------------------>READY"
+    Logger.logInfo(self, msg)
+    print(F.MAGENTA + msg + F.END)
 
   async def on_command_error(self, ctx, error):
     if isinstance(error, discord.ext.commands.CommandNotFound):
-      print("Unrecognized Command")
+      Logger.logError(self, "Unrecognized Command: " + str(error))
       return
     raise error
-
-  async def logConnection(self, msg:str):
-    x = datetime.datetime.now()
-    msg = str(x) + ": " + msg + "\n"
-    f = open(connectionLogFile, "a")
-    f.write(msg)
-    f.close()
-
-  async def logCommand(self, interaction:discord.Interaction):
-    timeStamp = str(datetime.datetime.now())
-    user = ": " + interaction.user.name
-    cmd = ": " + interaction.command.name
-    msg = timeStamp + user + cmd + "\n"
-    f = open(commandLogFile, "a")
-    f.write(msg)
-    f.close()
 
 try:
   cgBot = CrescentGuardianBot()
   cgBot.run(os.environ['BOT_TOKEN'])
-except discord.errors.HTTPException:
+except Exception as error:
+  print(F.RED + "\nException Encountered: "  + F.END + str(error) + "\n")
   os.system("kill 1")

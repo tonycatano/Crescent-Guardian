@@ -1,0 +1,14 @@
+{
+  "helpPrivate":           true,
+  "helpTimeout":           60,
+  "schedulePrivate":       true,
+  "scheduleTimeout":       75,
+  "gmUpdatePanelPrivate":  true,
+  "gmUpdatePanelTimeout":  75,
+  "gmAddTimeout":          75,
+  "gmQuickAddTimeout":     75,
+  "gmEditTimeout":         75,
+  "gmBossScrollTimeout":   75,
+  "processingPrivate":     true,
+  "errorMessagePrivate":   true
+}

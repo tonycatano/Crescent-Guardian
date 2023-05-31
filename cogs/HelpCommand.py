@@ -2,78 +2,87 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from common.common import guildIDs
-from common.common import botCmds
+from common.common import gmCommandList
 from common.common import relNotesFile
+from common.common import embyColour
+from common.common import logCommand
+from common.common import space
+from common.common import getConfig
+from common.Logger import Logger
+from gui.CommonView import CommonView
 
 #--------------------------------------------------------------
 # HelpEmbed
 #--------------------------------------------------------------
 class HelpEmbed(discord.Embed):
-
   def __init__(self):
-    super().__init__(title="**Crescent Guardian Commands**",
-                     colour=discord.Colour.blue())
-    self.addCmdDescriptions()
-    self.relNotesHeader = self.initRelNotesHeader()
-    self.relNotes = self.initRelNotes()
-    self.relNotesVisible = False
-    self.relNotesIndex = 0
+    super().__init__(colour=embyColour)
+    self.imageURL = "https://www.dropbox.com/s/9t1xroelxn1gge8/HelpMenuShortClip2b-small.gif?raw=1"
+    self.page = 1
+    self.setPage()
 
-  def addCmdDescriptions(self):
-    for key in botCmds.keys():
-      self.add_field(name=key, value=botCmds[key][0],inline=botCmds[key][1])
+  def addCommandInfo(self):
+    for cmd in gmCommandList:
+      self.add_field(name="/" + cmd.name, value=cmd.descr + "\n", inline=False)
 
-  def initRelNotesHeader(self) -> str:
-    hdr = "__"
-    for i in range(77):
-      hdr += " "
-    hdr += "__"
-    return hdr
-
-  def initRelNotes(self) -> str:
-    f = open(relNotesFile, "r")
-    relNotes = f.read()
-    f.close()
+  def readReleaseNotes(self) -> str:
+    with open(relNotesFile, "r") as file:
+      relNotes = file.read()
     return relNotes
 
-  async def toggleRelNotes(self):
-    if self.relNotesVisible:
-      self.remove_field(self.relNotesIndex)
+  def setPage(self):
+    if self.page == 1:
+      self.clear_fields()
+      self.title = space(6) + "**Crescent Guardian**"
+      self.description = space(8) + "**Graphical UI**"
+      self.set_image(url=self.imageURL)
+    elif self.page == 2:
+      self.clear_fields()
+      self.title = space(6) + "**Crescent Guardian**"
+      self.description = space(9) + "**Commands**" + space(13)
+      self.addCommandInfo()
+      self.set_image(url="")
+    elif self.page == 3:
+      self.clear_fields()
+      self.title = space(6) + "**Crescent Guardian**"
+      self.description = space(6) + "**2.0.0 Release Notes\n\n**"
+      self.description += self.readReleaseNotes()
+      self.set_image(url="")
     else:
-      self.add_field(name=self.relNotesHeader, value=self.relNotes, inline=False)
-      self.relNotesIndex = len(self.fields) - 1
-    self.relNotesVisible = not self.relNotesVisible
-
+      Logger.logError(self, "Unsupported help page")
+    
 #--------------------------------------------------------------
 # HelpPanel
 #--------------------------------------------------------------
 class HelpPanel():
-
   def __init__(self, timeout, interaction:discord.Interaction):
-    self.intMsg = None
     self.interaction = interaction
     self.emby = HelpEmbed()
-    self.view = discord.ui.View(timeout=timeout)
-    self.button = discord.ui.Button(label="Release Notes ▼", style=discord.ButtonStyle.secondary)
-    self.button.callback = self.button_callback
-    self.view.add_item(self.button)
-    self.view.on_timeout = self.on_timeout
+    self.view = CommonView(timeout=timeout)
+    self.view.cancelButton.label = "Dismiss"
+    self.view.addCancelButton()
+    self.leftArrowButton = discord.ui.Button(label="◁", style=discord.ButtonStyle.primary)
+    self.rightArrowButton = discord.ui.Button(label="▷", style=discord.ButtonStyle.primary)
+    self.leftArrowButton.callback = self.leftArrowButtonCallback
+    self.rightArrowButton.callback = self.rightArrowButtonCallback
+    self.view.add_item(self.leftArrowButton)
+    self.view.add_item(self.rightArrowButton)
+    self.view.on_timeout = self.view.removeViewOnTimeout
 
-  async def button_callback(self, interaction:discord.Interaction):
-    await interaction.response.defer()
-    await self.emby.toggleRelNotes()
-    self.button.label = "Release Notes ▲" if self.emby.relNotesVisible else "Release Notes ▼"
-    await self.intMsg.edit(embed=self.emby, view=self.view)
-    await self.view.wait()
+  async def leftArrowButtonCallback(self, interaction:discord.Interaction):
+    self.emby.page = 3 if self.emby.page == 1 else self.emby.page - 1
+    self.emby.setPage()
+    await interaction.response.edit_message(embed=self.emby, view=self.view)
 
-  async def on_timeout(self) -> None:
-    self.view.clear_items()
-    await self.intMsg.edit(view=self.view)
+  async def rightArrowButtonCallback(self, interaction:discord.Interaction):
+    self.emby.page = 1 if self.emby.page == 3 else self.emby.page + 1
+    self.emby.setPage()
+    await interaction.response.edit_message(embed=self.emby, view=self.view)
 
   async def run(self):
-    await self.interaction.response.send_message(view=self.view, embed=self.emby, ephemeral=True)
-    self.intMsg = await self.interaction.original_response()
-    await self.view.wait()
+    await self.interaction.response.send_message(view=self.view, embed=self.emby,
+                                                 ephemeral=getConfig('helpPrivate'))
+    self.view.parentMsg = await self.interaction.original_response()
 
 #--------------------------------------------------------------
 # HelpCommand
@@ -81,12 +90,13 @@ class HelpPanel():
 class HelpCommand(commands.Cog):
   def __init__(self, bot:commands.Bot) -> None:
     self.bot = bot
-    self.timeout = 60 # seconds
 
   @app_commands.command(name="help", description="View all Crescent Guardian commands")
   async def help(self, interaction:discord.Interaction) -> None:
-    await self.bot.logCommand(interaction)
-    helpPanel = HelpPanel(timeout=self.timeout, interaction=interaction)
+    await logCommand(interaction)
+    
+    helpPanel = HelpPanel(timeout=getConfig('helpTimeout'),
+                          interaction=interaction)
     await helpPanel.run()
 
 async def setup(bot: commands.Bot) -> None:

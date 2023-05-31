@@ -1,3 +1,6 @@
+SS1
+SS2
+SS3
 B1
 B2
 C1
@@ -6,11 +9,10 @@ M1
 M2
 S1
 S2
-V
-A
+Rulu
+Val
+Arsha
+E1
+E2
 F1
 F2
-SS1
-SS2
-SS3
--ERASE-
