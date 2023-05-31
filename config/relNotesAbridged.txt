@@ -1,7 +1,19 @@
-**Crescent Guardian 1.2.0 Release Notes**
+If you don't feel like typing GM commands
+anymore, try the ***new graphical interface**!*
+:star2: :smiley: :star2:
 
-The **/gmgarmy** command is now called **/gmscroll**. And it now supports updating the boss scroll piece count for Ferrid, Mudster, and Garmoth. Try it out! Have fun! :grin:
+Use the new **Update** button at the bottom 
+of the GM List to add, edit, or delete GMs, 
+as well as update the boss scroll count.
 
-The **/help** command is now a private message. And the help panel now contains a button to toggle the release notes if you wish to read them. :nerd:
+If a GM List isn't currently displayed, use 
+the new **Display GM List** option in the 
+message context menu.
 
-Several other arcane changes were made that I won't bore you with here. :wink:
+Click [here](https://www.dropbox.com/s/tuu8xm8esycll0e/SneakPeek.mp4?raw=1) for a short demo on the new 
+graphical interface. 
+
+If you like typing your commands, I got 
+you! All legacy slash commands are still 
+available, including the new **/gmupdate** 
+command.

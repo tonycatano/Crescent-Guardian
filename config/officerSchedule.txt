@@ -1,9 +1,18 @@
-```
-Sun  -  Ginger
-Mon  -  Postal
-Tue  -  N/A
-Wed  -  Lycos
-Thu  -  N/A
-Fri  -  N/A
-Sat  -  Texi
-```
+{
+  "color": 3447003,
+  "type": "rich",
+  "title": "**Officer Schedule**",
+  "fields": 
+  [
+    {
+      "inline": false,
+      "name": "**Off Duty (Evenings)**",
+      "value": "```Sun  -  Ginger\nMon  -  Postal\nTue  -  N/A\nWed  -  Lycos\nThu  -  Vykeman\nFri  -  N/A\nSat  -  Texi```"
+    },
+    {
+      "inline": false,
+      "name": "**Seeker Rotation**",
+      "value": "```Lycos-Vyke-Night-Ginger-Postal```"
+    }
+  ]
+}
