@@ -4,6 +4,7 @@ from replit import db
 from common.common import embyColour
 from common.common import userIdStub
 from common.common import sendErrorMessage
+from common.common import spacer
 from common.common import Result
 
 gmReqTable = "gm_reqs"
@@ -16,7 +17,6 @@ checkMark = " :white_check_mark: "
 serverDelim = " ✓ "
 nameModifier = "ⁱ"
 circleBullet = "\u2022 "
-spacer = "\u2800"
 
 noServer = "X"
 noSize = "X"
@@ -109,6 +109,19 @@ def getGMList() -> List[str]:
         gm += serverDelim + guildMission.server
     gmList.append(gm)
   return gmList
+
+#-------------------------------------------------------------------------------------------
+# Return a hash value of the entire DB
+#-------------------------------------------------------------------------------------------
+def getDbHash() -> int:
+  def iterdict(dbDict, result:str=""):
+    for key,val in dbDict.items():
+     if isinstance(val, dict):
+       iterdict(val, result)
+     else:
+       result += str(key) + ":" + str(val)
+    return result
+  return hash(iterdict(db))
 
 #-------------------------------------------------------------------------------------------
 # Find the GM req entry in the DB that matches the given name
@@ -282,8 +295,10 @@ async def clearGMReqTable() -> Result:
 # The ScrollPieces class encapsulates the three different types of boss scroll pieces
 #-------------------------------------------------------------------------------------------
 class ScrollPieces:
-  def __init__(self, garmoth:str, ferrid:str, mudster:str):
+  def __init__(self, garmoth:str, khan:str, puturum:str, ferrid:str, mudster:str):
     self.garmoth = garmoth
+    self.khan = khan
+    self.puturum = puturum
     self.ferrid = ferrid
     self.mudster = mudster
 
@@ -291,9 +306,11 @@ class ScrollPieces:
 # Get the current number of scroll pieces
 #-------------------------------------------------------------------------------------------
 def getScrollPieces() -> ScrollPieces:
-  return ScrollPieces(garmoth=db['garmy_pieces'],
-                      ferrid=db['ferrid_pieces'],
-                      mudster=db['mudster_pieces'])
+  return ScrollPieces(garmoth=db['garmy_pieces'] if 'garmy_pieces' in db.keys() else 0,
+                      khan=db['khan_pieces'] if 'khan_pieces' in db.keys() else 0,
+                      puturum=db['puturum_pieces'] if 'puturum_pieces' in db.keys() else 0,
+                      ferrid=db['ferrid_pieces'] if 'ferrid_pieces' in db.keys() else 0,
+                      mudster=db['mudster_pieces'] if 'mudster_pieces' in db.keys() else 0)
 
 #-------------------------------------------------------------------------------------------
 # Update the number of boss scroll pieces in the DB
@@ -304,6 +321,8 @@ async def updateBossScrollPieces(scrollPieces:ScrollPieces) -> Result:
 
   try:
     garmoth = int(scrollPieces.garmoth)
+    khan = int(scrollPieces.khan)
+    puturum = int(scrollPieces.puturum)
     ferrid = int(scrollPieces.ferrid)
     mudster = int(scrollPieces.mudster)
   except:
@@ -311,24 +330,45 @@ async def updateBossScrollPieces(scrollPieces:ScrollPieces) -> Result:
     return result
 
   if garmoth != None:
+    garmoth = 0 if garmoth < 0 else garmoth
     garmoth = 5 if garmoth > 5 else garmoth
-    garmothOld = db['garmy_pieces']
+    garmothOld = db['garmy_pieces'] if 'garmy_pieces' in db.keys() else 0
     if garmothOld != garmoth:
       db['garmy_pieces'] = garmoth
       result.msg += "\n> **Garmoth** scroll pieces from **" + str(garmothOld) + "** to **" + str(garmoth) + "**"
       result.good = True
 
+  if khan != None:
+    khan = 0 if khan < 0 else khan
+    khan = 5 if khan > 5 else khan
+    khanOld = db['khan_pieces'] if 'khan_pieces' in db.keys() else 0
+    if khanOld != khan:
+      db['khan_pieces'] = khan
+      result.msg += "\n> **Khan** scroll pieces from **" + str(khanOld) + "** to **" + str(khan) + "**"
+      result.good = True
+
+  if puturum != None:
+    puturum = 0 if puturum < 0 else puturum
+    puturum = 5 if puturum > 5 else puturum
+    puturumOld = db['puturum_pieces'] if 'puturum_pieces' in db.keys() else 0
+    if puturumOld != puturum:
+      db['puturum_pieces'] = puturum
+      result.msg += "\n> **Puturum** scroll pieces from **" + str(puturumOld) + "** to **" + str(puturum) + "**"
+      result.good = True
+
   if ferrid != None:
+    ferrid  = 0 if ferrid < 0 else ferrid
     ferrid  = 4 if ferrid > 4 else ferrid
-    ferridOld = db['ferrid_pieces'] 
+    ferridOld = db['ferrid_pieces'] if 'ferrid_pieces' in db.keys() else 0
     if ferridOld != ferrid:
       db['ferrid_pieces'] = ferrid
       result.msg += "\n> **Ferrid** scroll pieces from **" + str(ferridOld) + "** to **" + str(ferrid) + "**"
       result.good = True
 
   if mudster != None:
+    mudster = 0 if mudster < 0 else mudster
     mudster = 4 if mudster > 4 else mudster
-    mudsterOld = db['mudster_pieces']
+    mudsterOld = db['mudster_pieces'] if 'mudster_pieces' in db.keys() else 0
     if mudsterOld != mudster:
       db['mudster_pieces'] = mudster
       result.msg += "\n> **Mudster** scroll pieces from **" + str(mudsterOld) + "** to **" + str(mudster) + "**"
@@ -337,11 +377,34 @@ async def updateBossScrollPieces(scrollPieces:ScrollPieces) -> Result:
   if not result.good:
     result.msg = userIdStub + "\nYou made no changes to **Boss Scrolls**"
     return result
-
-  if db['garmy_pieces'] == 0 and db['ferrid_pieces'] == 0 and db['mudster_pieces'] == 0:
-    result.msg = "> " + userIdStub + " set all **Boss Scroll** pieces to **zero**"
+  
+  # if db['garmy_pieces'] == 0 and db['khan_pieces'] == 0 and db['puturum_pieces'] == 0 and \
+  #    db['ferrid_pieces'] == 0 and db['mudster_pieces'] == 0:
+  #   result.msg = "> " + userIdStub + " set all **Boss Scroll** pieces to **zero**"
 
   return result
+
+#-------------------------------------------------------------------------------------------
+# Update the number pieces in the DB for one particular boss scroll
+#-------------------------------------------------------------------------------------------
+async def updateBossScroll(scroll:str, pieces:str) -> Result:
+  scrollPieces = getScrollPieces()
+  if scroll == "garmoth":
+    scrollPieces.garmoth = pieces
+  elif scroll == "khan":
+    scrollPieces.khan = pieces
+  elif scroll == "puturum":
+    scrollPieces.puturum = pieces
+  elif scroll == "ferrid":
+    scrollPieces.ferrid = pieces
+  elif scroll == "mudster":
+    scrollPieces.mudster = pieces
+  else:
+    result = Result(msg=userIdStub + "\n**" + scroll + "** is not a valid boss scroll")
+    result.good = False
+    return result
+
+  return await updateBossScrollPieces(scrollPieces)
 
 #-------------------------------------------------------------------------------------------
 # Process a final result status
@@ -358,7 +421,7 @@ async def processResult(interaction:discord.Interaction, result:Result) -> None:
 # Generate and return an embed with the current list of GMs
 #-------------------------------------------------------------------------------------------
 async def genGMListEmbed() -> discord.Embed:
-  embyTitle = "**Guild Missions**"
+  embyTitle = spacer(7) + "**Guild Missions**"
   guildMissions = getCurrentGuildMissionList()
   totalGMs = len(guildMissions)
   if totalGMs > 0:
@@ -373,19 +436,31 @@ async def genGMListEmbed() -> discord.Embed:
   else:
     gmList = " "
 
-  ferridPieces  = db["ferrid_pieces"] if "ferrid_pieces" in db.keys() else 0
-  mudsterPieces = db["mudster_pieces"] if "mudster_pieces" in db.keys() else 0
-  garmothPieces = db["garmy_pieces"] if "garmy_pieces" in db.keys() else 0
+  garmothPieces = str(db["garmy_pieces"]) if "garmy_pieces" in db.keys() else 0
+  khanPieces    = str(db["khan_pieces"]) if "khan_pieces" in db.keys() else 0
+  puturumPieces = str(db["puturum_pieces"]) if "puturum_pieces" in db.keys() else 0
+  ferridPieces  = str(db["ferrid_pieces"]) if "ferrid_pieces" in db.keys() else 0
+  mudsterPieces = str(db["mudster_pieces"]) if "mudster_pieces" in db.keys() else 0
+
+  garmothPieces = garmothPieces + "/5" if int(garmothPieces) < 5 else ":star2:"
+  khanPieces    = khanPieces    + "/5" if int(khanPieces)    < 5 else ":star2:"
+  puturumPieces = puturumPieces + "/5" if int(puturumPieces) < 5 else ":star2:"
+  ferridPieces  = ferridPieces  + "/4" if int(ferridPieces)  < 4 else ":star2:"
+  mudsterPieces = mudsterPieces + "/4" if int(mudsterPieces) < 4 else ":star2:"
 
   lineLimit = 56 if totalGMs < 10 else 54
   scrollStatusTitle = "*__**"
   for i in range (lineLimit):
     scrollStatusTitle += " "
   scrollStatusTitle += "Total GMs: **" + str(totalGMs) + "__*\n"    
-  scrollStatusTitle += "***Boss Scrolls***"
-  scrollStatus = "***Garmoth:** " + str(garmothPieces) + "/5" + spacer + \
-                 "**Ferrid:** " + str(ferridPieces) + "/4" + spacer + \
-                 "**Mudster:** " + str(mudsterPieces) + "/4*"
+  scrollStatusTitle += spacer(9) + "**Boss Scrolls**"
+  scrollStatus = spacer(1) + \
+                 "**Garmoth** " + garmothPieces + spacer(1) + " " + \
+                 "**Khan** "    + khanPieces    + spacer(1) + " " + \
+                 "**Puturum** " + puturumPieces + "\n" + \
+                 spacer(6) + \
+                 "**Ferrid** "  + ferridPieces  + spacer(1) + " " + \
+                 "**Mudster** " + mudsterPieces
 
   emby = discord.Embed(title=embyTitle,
                        description=gmList,

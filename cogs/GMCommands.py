@@ -16,6 +16,7 @@ from common.GuildMission import editGMReqEntry
 from common.GuildMission import deleteGMReqEntry
 from common.GuildMission import clearGMReqTable
 from common.GuildMission import processResult
+from common.GuildMission import updateBossScroll
 from gui.GMListPanel import GMListPanel
 from gui.GMUpdatePanel import GMUpdatePanel
 
@@ -132,6 +133,24 @@ class GMCommands(commands.Cog):
     await logCommand(interaction)
     result = await clearGMReqTable()
     await processResult(interaction=interaction, result=result)
+
+  #----------------------------------------------
+  # gmscroll
+  #----------------------------------------------
+  gmCmd = next(cmd for cmd in gmCommandList if cmd.name == "gmscroll")
+  @app_commands.command(name=gmCmd.name, description=gmCmd.descr)
+  @app_commands.describe(scroll="Choose a boss scroll", pieces="Enter the numbr of scroll pieces")
+  async def gmscroll(self, interaction:discord.Interaction, scroll:str, pieces:str):
+    await logCommand(interaction)
+    result = await updateBossScroll(scroll=scroll, pieces=pieces)
+    await processResult(interaction=interaction, result=result)
+
+  @gmscroll.autocomplete('scroll')
+  async def gmscroll_autocomplete_scroll(self, interaction:discord.Interaction,
+                                         current:str) -> List[Choice[str]]:
+    scrollList = ["garmoth", "khan", "puturum", "ferrid", "mudster"]
+    return [Choice(name=scroll, value=scroll)
+            for scroll in scrollList if current.lower() in scroll.lower()]
 
   #----------------------------------------------
   # gmupdate

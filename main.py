@@ -4,10 +4,11 @@ import datetime
 from discord.ext import commands
 from common.common import guildIDs
 from common.common import connectionLogFile
-from common.common import sweepMessages
+from common.Sweeper import Sweeper
 from common.Logger import Logger
 from common.Format import Format as F
 from gui.ContextMenu import ContextMenu
+from gui.GMListPanel import GMListPanelView
 
 class CrescentGuardianBot(commands.Bot):
   def __init__(self):
@@ -22,6 +23,8 @@ class CrescentGuardianBot(commands.Bot):
 
   async def setup_hook(self):
     Logger.logInfo(self, "Booting " + str(self.user.name))
+    Logger.logInfo(self, "Adding persistent view: GMListPanelView")
+    self.add_view(GMListPanelView())
     Logger.logInfo(self, "Loading cogs:")
     cogs = [f'cogs.{f[:-3]}' for f in os.listdir('./cogs') if f.endswith('.py')]
     for cog in cogs:
@@ -39,7 +42,7 @@ class CrescentGuardianBot(commands.Bot):
     with open(connectionLogFile, "a") as file:
       file.write(str(datetime.datetime.now()) + ": " + msg + "\n")
     Logger.logInfo(self, msg)
-    await sweepMessages(self)
+    await Sweeper.sweepMessages(self)
     await self.change_presence(activity=discord.Activity(
       type=discord.ActivityType.watching, name="Guild"))
     msg = "------------------>READY"

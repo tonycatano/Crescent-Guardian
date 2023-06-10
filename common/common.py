@@ -16,6 +16,7 @@ serverListFile    = "config/serverList.txt"
 
 embyColour = discord.Colour.blue()
 userIdStub = "xxXX_USERID_XXxx"
+gmListPanelViewCustomId = "GMListPanelView_UpdateButton"
 
 genericErrorMsg = userIdStub + " I'm sorry, something went wrong :frowning:"
 
@@ -36,6 +37,11 @@ gmCommandList = [
   CommandDescr("gmclear",    "Clear",        "Clear the entire GM list"),
   CommandDescr("gmscroll",   "Boss Scrolls", "Update boss scroll pieces"),
   CommandDescr("gmupdate",   "Update",       "Update any part of the GM list")]
+
+infoCommandList = [
+  CommandDescr("viewguildinfo",   "View Guild Info",   "Display info about the guild"),
+  CommandDescr("postguildinfo",   "Post Guild Info",   "Post info about the guild"),
+  CommandDescr("viewofficerinfo", "View Officer Info", "Display guild officer info")]
 
 miscCommandList = [
   CommandDescr("schedule",   "Schedule",     "Display the officer schedule"),
@@ -89,12 +95,12 @@ class Result():
     self.good = good
     self.msg = msg
 
-# Return the specified number of special unicode blank chars to be used as spaces 
-def space(n:int) -> str:
-  spaces = ""
-  for i in range(1,n):
-    spaces += "\u2800"
-  return spaces
+# Return the specified number of special unicode blank chars to be used as spacers 
+def spacer(n:int) -> str:
+  spacers = ""
+  for i in range(0,n):
+    spacers += "\u2800"
+  return spacers
 
 # Replace the userIdStub with the provided user string 
 def resolveUserID(content:str, user:str) -> str:
@@ -128,35 +134,6 @@ def rhasattr(obj, attr):
   try: firstAttr, remainingAttrs = attr.split('.', 1)
   except: return hasattr(obj, attr)
   return rhasattr(getattr(obj, firstAttr), remainingAttrs)
-
-# Remove any message components left over by this bot from previous runs 
-async def sweepMessages(bot:discord.ext.commands.Bot):
-  for guild in [bot.get_guild(guildId.id) for guildId in guildIDs if bot.get_guild(guildId.id)]:
-    botMember = guild.get_member(bot.user.id)
-    Logger.logInfo(None, "Guild Name(ID): " + str(guild.name) + "(" + str(guild.id) + ")")
-    Logger.logInfo(None, "  Bot Name(ID): " + str(botMember.name) + "(" + str(bot.user.id) + ")")
-    # Sweep all channels for which this bot has view permission
-    Logger.logInfo(None, "Sweeping Channels")
-    for channel in [channel for channel in guild.channels
-                    if channel.type == discord.ChannelType.text
-                    and channel.permissions_for(botMember).view_channel]:
-      Logger.logInfo(None, "Channel Name(ID): " + str(channel.name) + "(" + str(channel.id) + ")")
-      for message in [message async for message in channel.history(limit=50)
-                      if message.author == botMember and message.components]:
-        Logger.logInfo(None, "Found a " + botMember.display_name + " message with components")
-        Logger.logInfo(None, "Removing components from message " + str(message.jump_url))
-        await message.edit(view=None)
-    # Sweep all threads for which this bot has view permission
-    Logger.logInfo(None, "Sweeping Threads")
-    for thread in [thread for thread in guild.threads
-                  if thread.type == discord.ChannelType.public_thread
-                  and thread.permissions_for(botMember).view_channel]:
-      Logger.logInfo(None, "Thread Name(ID): " + str(thread.name) + "(" + str(thread.id) + ")")
-      for message in [message async for message in thread.history(limit=50)
-                      if message.author == botMember and message.components]:
-        Logger.logInfo(None, "Found a " + botMember.display_name + " message with components")
-        Logger.logInfo(None, "Removing components from message " + str(message.jump_url))
-        await message.edit(view=None)
 
 # Print all users to the console screen
 # async def printAllUsers(bot:commands.Bot):
