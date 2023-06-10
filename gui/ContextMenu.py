@@ -4,6 +4,8 @@ from common.common import guildIDs
 from common.common import userIdStub
 from common.common import logCommand
 from gui.GMListPanel import GMListPanel
+# from gui.GMUpdatePanel import GMUpdatePanel
+# from cogs.ScheduleCommand import SchedulePanel
 
 #--------------------------------------------------------------------------
 # Context Menu Commands
@@ -20,7 +22,7 @@ class ContextMenu():
       gmListPanel = GMListPanel(interaction=interaction, content=content)
       await gmListPanel.run()
 
-    # Save these two for Rel 2.1.0
+    # Save these two for a subsequent release
     # # Update GM List
     # @self.bot.tree.context_menu(name="Update GM List", guilds=guildIDs)
     # async def updateGMList(interaction:discord.Interaction, message:discord.Message):

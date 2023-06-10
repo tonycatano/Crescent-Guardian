@@ -1,13 +1,13 @@
 {
   "color": 3447003,
   "type": "rich",
-  "title": "**Officer Schedule**",
+  "title": "⠀⠀⠀⠀⠀⠀**Officer Schedules**",
   "fields": 
   [
     {
       "inline": false,
-      "name": "**Off Duty (Evenings)**",
-      "value": "```Sun  -  Ginger\nMon  -  Postal\nTue  -  N/A\nWed  -  Lycos\nThu  -  Vykeman\nFri  -  N/A\nSat  -  Texi```"
+      "name": "**Off Duty - Evenings**",
+      "value": "```Sun  -  Ginger\nMon  -  Postal\nTue  -     \nWed  -  Lycos\nThu  -  Vykeman\nFri  -     \nSat  -  Texi```"
     },
     {
       "inline": false,

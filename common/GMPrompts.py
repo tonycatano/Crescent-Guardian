@@ -18,5 +18,7 @@ class GMPrompts:
   gmPromptEdit     = "Select the GM to Edit"
   gmPromptDelete   = "Select the GM to Delete"
   garmothPrompt    = "Enter number of Garmoth scroll pieces"
+  khanPrompt       = "Enter number of Khan scroll pieces"
+  puturumPrompt    = "Enter number of Puturum scroll pieces"
   ferridPrompt     = "Enter number of Ferrid scroll pieces"
   mudsterPrompt    = "Enter number of Mudster scroll pieces"

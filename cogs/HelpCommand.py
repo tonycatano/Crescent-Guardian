@@ -6,7 +6,7 @@ from common.common import gmCommandList
 from common.common import relNotesFile
 from common.common import embyColour
 from common.common import logCommand
-from common.common import space
+from common.common import spacer
 from common.common import getConfig
 from common.Logger import Logger
 from gui.CommonView import CommonView
@@ -23,7 +23,9 @@ class HelpEmbed(discord.Embed):
 
   def addCommandInfo(self):
     for cmd in gmCommandList:
-      self.add_field(name="/" + cmd.name, value=cmd.descr + "\n", inline=False)
+      self.add_field(name=spacer(1) + "/" + cmd.name, 
+                     value=spacer(1) + " " + cmd.descr, 
+                     inline=False)
 
   def readReleaseNotes(self) -> str:
     with open(relNotesFile, "r") as file:
@@ -33,24 +35,25 @@ class HelpEmbed(discord.Embed):
   def setPage(self):
     if self.page == 1:
       self.clear_fields()
-      self.title = space(6) + "**Crescent Guardian**"
-      self.description = space(8) + "**Graphical UI**"
+      self.description = spacer(7) + "**Crescent Guardian**\n" + \
+                         spacer(9) + "**Graphical UI**"
       self.set_image(url=self.imageURL)
     elif self.page == 2:
       self.clear_fields()
-      self.title = space(6) + "**Crescent Guardian**"
-      self.description = space(9) + "**Commands**" + space(13)
+      self.description = spacer(7)  + "**Crescent Guardian**\n" + \
+                         spacer(10) + "**Commands**" + spacer(10)
       self.addCommandInfo()
       self.set_image(url="")
     elif self.page == 3:
       self.clear_fields()
-      self.title = space(6) + "**Crescent Guardian**"
-      self.description = space(6) + "**2.0.0 Release Notes\n\n**"
+      self.description = spacer(7) + "**Crescent Guardian**\n" + \
+                         spacer(3) + " " + spacer(3) + " " + \
+                         "**2.0.0 Release Notes\n\n**"
       self.description += self.readReleaseNotes()
       self.set_image(url="")
     else:
       Logger.logError(self, "Unsupported help page")
-    
+
 #--------------------------------------------------------------
 # HelpPanel
 #--------------------------------------------------------------

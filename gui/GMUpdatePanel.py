@@ -193,6 +193,7 @@ class GMAddModal(CommonModal):
 
   async def on_submit(self, interaction:discord.Interaction):
     await logCommand(interaction=interaction, cmdNameOverride="Update - Add")
+    self.stop()
     guildMissions = [GuildMission(str(self.target.value), str(self.server.value), str(self.size.value))]
     result = await addGMReqEntries(guildMissions)
     await processResult(interaction=interaction, result=result)
@@ -223,6 +224,7 @@ class GMQuickAddModal(CommonModal):
 
   async def on_submit(self, interaction:discord.Interaction):
     await logCommand(interaction=interaction, cmdNameOverride="Update - Quick Add")
+    self.stop()
     guildMissions = [GuildMission(self.target1.value), GuildMission(self.target2.value),
                      GuildMission(self.target3.value), GuildMission(self.target4.value),
                      GuildMission(self.target5.value)]
@@ -255,6 +257,7 @@ class GMEditModal(CommonModal):
 
   async def on_submit(self, interaction:discord.Interaction):
     await logCommand(interaction=interaction, cmdNameOverride="Update - Edit")
+    self.stop()
     result = await editGMReqEntry(str(self.gm), str(self.target), str(self.server), str(self.size))
     await processResult(interaction=interaction, result=result)
 
@@ -269,6 +272,12 @@ class GMBossScrollsModal(CommonModal):
     self.garmoth = ui.TextInput(label='Garmoth Scroll Pieces',
                                 placeholder=gmp.garmothPrompt, default=str(scrollPieces.garmoth),
                                 required=False, min_length=1, max_length=80)
+    self.khan    = ui.TextInput(label='Khan Scroll Pieces',
+                                placeholder=gmp.khanPrompt, default=str(scrollPieces.khan),
+                                required=False, min_length=1, max_length=80)
+    self.puturum = ui.TextInput(label='Puturum Scroll Pieces',
+                                placeholder=gmp.puturumPrompt, default=str(scrollPieces.puturum),
+                                required=False, min_length=1, max_length=80)
     self.ferrid  = ui.TextInput(label='Ferrid Scroll Pieces',
                                 placeholder=gmp.ferridPrompt, default=str(scrollPieces.ferrid),
                                 required=False, min_length=1, max_length=80)
@@ -276,12 +285,16 @@ class GMBossScrollsModal(CommonModal):
                                 placeholder=gmp.mudsterPrompt, default=str(scrollPieces.mudster),
                                 required=False, min_length=1, max_length=80)
     self.add_item(self.garmoth)
+    self.add_item(self.khan)
+    self.add_item(self.puturum)
     self.add_item(self.ferrid)
     self.add_item(self.mudster)
 
   async def on_submit(self, interaction:discord.Interaction):
     await logCommand(interaction=interaction, cmdNameOverride="Update - Boss Scrolls")
-    scrollPieces = ScrollPieces(garmoth=self.garmoth.value, ferrid=self.ferrid.value,
+    self.stop()
+    scrollPieces = ScrollPieces(garmoth=self.garmoth.value, khan=self.khan.value,
+                                puturum=self.puturum.value, ferrid=self.ferrid.value,
                                 mudster=self.mudster.value)
     result = await updateBossScrollPieces(scrollPieces)
     await processResult(interaction=interaction, result=result)
